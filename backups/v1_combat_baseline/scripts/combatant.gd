@@ -8,22 +8,14 @@ signal defeated
 @export var is_player: bool = true
 @export var character_name: String = "Gladiator"
 @export var max_health: float = 100.0
-@export var hop_force_y: float = 270.0 # Snappier vertical pop
-@export var hop_force_x: float = 140.0 # Tighter, controlled horizontal hop
-@export var gravity: float = 1300.0    # Grounded, weighty physics
-@export var balance_spring: float = 18.0 # Snappy upright recovery
-@export var arm_rotation_speed: float = 34.0 # Radians/sec arm follows target
+@export var hop_force_y: float = 320.0
+@export var hop_force_x: float = 240.0
+@export var gravity: float = 980.0
+@export var balance_spring: float = 12.0 # Speed of returning to upright posture
+@export var arm_rotation_speed: float = 26.0 # Radians/sec arm follows target
 @export var ai_aggression: float = 1.0
 @export var is_zombie: bool = false
 @export var armor_tier: int = 1
-
-# AI State Machine
-enum AIState { APPROACH, SPACING, WINDUP, SLASH, RETREAT }
-var _ai_state: AIState = AIState.APPROACH
-var _ai_timer: float = 0.0
-var _ai_target_angle: float = 0.0
-var _ai_attack_cooldown: float = 0.4
-var _ai_dodge_cooldown: float = 0.0
 
 var current_health: float = 100.0
 var is_alive: bool = true
@@ -142,8 +134,8 @@ func _process_player_weapon(delta: float) -> void:
 	shoulder_pivot.rotation = rotate_toward(shoulder_pivot.rotation, target_angle, arm_rotation_speed * delta)
 
 func _process_ai(delta: float) -> void:
-	var target_combatant: CharacterBody2D = _find_opponent()
-	if not target_combatant or target_combatant.get("is_alive") != true:
+	var target_combatant: Combatant = _find_opponent()
+	if not target_combatant or not target_combatant.is_alive:
 		return
 	
 	var to_target: Vector2 = target_combatant.global_position - global_position
@@ -152,129 +144,42 @@ func _process_ai(delta: float) -> void:
 	# Face opponent
 	facing_direction = 1 if to_target.x > 0.0 else -1
 	
-	_ai_timer -= delta
-	_ai_attack_cooldown = maxf(0.0, _ai_attack_cooldown - delta)
-	_ai_dodge_cooldown = maxf(0.0, _ai_dodge_cooldown - delta)
-	
-	# Check for incoming high-speed player strike to dodge!
-	var player_weapon_speed: float = 0.0
-	var p_weapon: Node = target_combatant.get_node_or_null("VisualRoot/ShoulderPivot/Weapon")
-	if p_weapon:
-		player_weapon_speed = float(p_weapon.get("current_tip_speed"))
-	
-	if dist < 125.0 and player_weapon_speed > 240.0 and _ai_dodge_cooldown <= 0.0 and is_on_floor() and not is_tripped:
-		# Smart dodge backwards!
-		_perform_hop(-facing_direction)
-		_ai_dodge_cooldown = 0.75
-		_ai_state = AIState.RETREAT
-		_ai_timer = 0.3
-	
-	# Exploit tripped player!
-	var player_tripped: bool = bool(target_combatant.get("is_tripped"))
-	if player_tripped and _ai_state != AIState.SLASH and _ai_state != AIState.WINDUP:
-		_ai_state = AIState.WINDUP
-		_ai_timer = 0.08 # Quick punish
-		_ai_target_angle = -0.3 # Head strike!
-		if is_on_floor() and dist > 80.0:
-			_perform_hop(facing_direction)
-	
-	# State Machine Logic
-	match _ai_state:
-		AIState.APPROACH:
-			if is_on_floor() and hop_cooldown <= 0.0 and not is_tripped:
-				if dist > 115.0:
-					_perform_hop(1.0 if to_target.x > 0.0 else -1.0)
-				else:
-					_ai_state = AIState.SPACING
-					_ai_timer = randf_range(0.2, 0.45)
-			
-			# Weapon stance in guard
-			_aim_arm_towards(shoulder_pivot.global_position + Vector2(facing_direction * 60, -10), delta, 18.0)
-			
-		AIState.SPACING:
-			if is_on_floor() and hop_cooldown <= 0.0 and not is_tripped:
-				if dist < 70.0:
-					# Too close, hop back
-					_perform_hop(-1.0 if to_target.x > 0.0 else 1.0)
-				elif dist > 135.0:
-					# Creep forward
-					_perform_hop(1.0 if to_target.x > 0.0 else -1.0)
-			
-			# Stance feints
-			var feint_y: float = sin(Time.get_ticks_msec() * 0.007) * 20.0
-			_aim_arm_towards(target_combatant.global_position + Vector2(0, feint_y), delta, 14.0)
-			
-			if _ai_timer <= 0.0 and _ai_attack_cooldown <= 0.0 and dist <= 125.0:
-				# Decide attack zone
-				var roll: float = randf()
-				if roll < 0.40:
-					# Head attack
-					_ai_target_angle = deg_to_rad(-25.0)
-				elif roll < 0.70:
-					# Torso slash
-					_ai_target_angle = deg_to_rad(5.0)
-				else:
-					# Low Leg trip
-					_ai_target_angle = deg_to_rad(35.0)
-				
-				# Start telegraph wind-up
-				_ai_state = AIState.WINDUP
-				_ai_timer = 0.16 # Windup duration
+	# Hopping spacing logic
+	if is_on_floor() and hop_cooldown <= 0.0 and not is_tripped:
+		var desired_dir: float = 0.0
+		if dist > 140.0:
+			desired_dir = 1.0 if to_target.x > 0.0 else -1.0
+		elif dist < 70.0:
+			desired_dir = -1.0 if to_target.x > 0.0 else 1.0
+		else:
+			# In combat range, occasional unpredictable feint hop
+			if randf() < 0.2:
+				desired_dir = -1.0 if randf() < 0.5 else 1.0
 		
-		AIState.WINDUP:
-			# Pull weapon back overhead as a clear telegraph
-			var windup_angle: float = deg_to_rad(-75.0)
-			_set_arm_angle(windup_angle, delta, 38.0)
-			
-			if _ai_timer <= 0.0:
-				# Strike forward!
-				_ai_state = AIState.SLASH
-				_ai_timer = 0.22
-				if is_on_floor() and dist > 75.0:
-					_perform_hop(facing_direction) # Step into strike
-		
-		AIState.SLASH:
-			# High-velocity whip forward towards chosen zone
-			_set_arm_angle(_ai_target_angle, delta, 48.0) # Explosive rotation
-			
-			if _ai_timer <= 0.0:
-				_ai_state = AIState.RETREAT
-				_ai_timer = 0.28
-				_ai_attack_cooldown = randf_range(0.4, 0.75)
-				if is_on_floor() and not is_tripped:
-					_perform_hop(-facing_direction) # Reset combat stance
-		
-		AIState.RETREAT:
-			# Guard recovery
-			_aim_arm_towards(shoulder_pivot.global_position + Vector2(facing_direction * 50, -15), delta, 22.0)
-			if _ai_timer <= 0.0:
-				_ai_state = AIState.SPACING
-				_ai_timer = randf_range(0.2, 0.5)
-
-func _aim_arm_towards(target_world_pos: Vector2, delta: float, rot_speed: float) -> void:
-	if not shoulder_pivot:
-		return
-	var to_aim: Vector2 = target_world_pos - shoulder_pivot.global_position
-	var target_angle: float = to_aim.angle()
-	if facing_direction == -1:
-		target_angle = PI - target_angle
-	shoulder_pivot.rotation = rotate_toward(shoulder_pivot.rotation, target_angle, rot_speed * delta)
-
-func _set_arm_angle(target_angle: float, delta: float, rot_speed: float) -> void:
-	if not shoulder_pivot:
-		return
-	shoulder_pivot.rotation = rotate_toward(shoulder_pivot.rotation, target_angle, rot_speed * delta)
+		if desired_dir != 0.0:
+			_perform_hop(desired_dir)
+	
+	# AI weapon swing towards opponent
+	if shoulder_pivot:
+		var aim_target: Vector2 = target_combatant.global_position
+		# Aim randomly between head and torso
+		aim_target.y += sin(Time.get_ticks_msec() * 0.005) * 30.0
+		var to_aim: Vector2 = aim_target - shoulder_pivot.global_position
+		var target_angle: float = to_aim.angle()
+		if facing_direction == -1:
+			target_angle = PI - target_angle
+		shoulder_pivot.rotation = rotate_toward(shoulder_pivot.rotation, target_angle, arm_rotation_speed * 0.8 * delta)
 
 func _perform_hop(dir_x: float) -> void:
 	velocity.y = -hop_force_y
 	velocity.x = dir_x * hop_force_x
-	hop_cooldown = 0.22 # Snappy hop cadence
+	hop_cooldown = 0.28 # Rhythmic hop cadence
 	
 	# Squash visual anticipation
-	_squash_scale = Vector2(0.88, 1.2)
+	_squash_scale = Vector2(0.85, 1.25)
 	
-	# Forward lurch rotation
-	rotation = deg_to_rad(dir_x * 7.0)
+	# Slight forward lurch rotation
+	rotation = deg_to_rad(dir_x * 8.0)
 
 func receive_hit(amount: float, zone_name: String, hit_dir: Vector2, swing_speed: float, attacker: Node2D) -> void:
 	if not is_alive:
