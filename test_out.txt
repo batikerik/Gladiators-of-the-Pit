@@ -1,0 +1,4 @@
+Welcome to Summer Engine (c) built on the awesome work by Godot 2007-present Juan Linietsky, Ariel Manzur & Godot Contributors.
+OpenGL API 3.3.14800 Core Profile Forward-Compatible Context FireGL 22.5.1 30.0.15021.11005 - Compatibility - Using Device: ATI Technologies Inc. - AMD Radeon(TM) Graphics
+
+[SE] AuthManager: CLI credential found; desktop session exchange required
