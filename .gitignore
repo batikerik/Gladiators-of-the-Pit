@@ -22,3 +22,9 @@ node_modules/
 *.bak
 
 build/
+
+# Local logs and old backups
+summer_run_*.txt
+test_*.txt
+backups/
+

@@ -1,9 +1,0 @@
-.NET: Failed to load project assembly
-ERROR: SSL module failed to initialize!
-   at: TLSContextMbedTLS::init_client (modules\mbedtls\tls_context_mbedtls.cpp:209)
-ERROR: Condition "err != OK" is true. Returning: err
-   at: StreamPeerMbedTLS::connect_to_stream (modules\mbedtls\stream_peer_mbedtls.cpp:104)
-ERROR: [SE] ChatDock: state:read-file failed: cannot open: res://summer_run_err.txt
-   at: ChatDock::_process_webview_message (editor\docks\chat_dock.cpp:6609)
-ERROR: [SE] ChatDock: state:read-file failed: cannot open: res://summer_run_out.txt
-   at: ChatDock::_process_webview_message (editor\docks\chat_dock.cpp:6609)
