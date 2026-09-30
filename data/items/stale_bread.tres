@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_food")
 id = &"stale_bread"
-display_name = "Чёрствый хлеб"
-description = "Тот самый хлеб, из-за которого всё началось. Твёрдый как камень."
+display_name = "Stale Bread"
+description = "The very bread that started it all. Hard as stone."
 max_stack = 5
 style = &"bread"
 heal_amount = 15.0

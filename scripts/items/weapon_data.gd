@@ -54,21 +54,21 @@ func move_mult() -> float:
 ## One-line summary for the inventory screen
 func stat_lines() -> PackedStringArray:
 	var lines := PackedStringArray()
-	lines.append("Урон: %d   Длина: %d   Вес: %.1f" % [int(base_damage), int(reach), weight])
-	lines.append("Заряд: %.2f с   Удар: %.2f с" % [max_charge_time(), strike_duration()])
+	lines.append(tr("Damage: %d   Reach: %d   Weight: %.1f") % [int(base_damage), int(reach), weight])
+	lines.append(tr("Charge: %.2f s   Swing: %.2f s") % [max_charge_time(), strike_duration()])
 	var traits := PackedStringArray()
 	if thrust_damage_mult >= 1.4:
-		traits.append("сильный укол")
+		traits.append(tr("strong thrust"))
 	if full_charge_damage_mult >= 2.8:
-		traits.append("мощный замах")
+		traits.append(tr("mighty swing"))
 	if heavy_threshold <= 0.65:
-		traits.append("легко ломает блок")
+		traits.append(tr("breaks guards easily"))
 	if block_chip_mult >= 0.35:
-		traits.append("бьёт сквозь блок")
+		traits.append(tr("cuts through guards"))
 	if stagger_on_hit > 0.0:
-		traits.append("оглушает")
+		traits.append(tr("stuns"))
 	if combo_step_bonus >= 0.25:
-		traits.append("быстрые комбо")
+		traits.append(tr("quick combos"))
 	if not traits.is_empty():
-		lines.append("Особое: " + ", ".join(traits))
+		lines.append(tr("Special: ") + ", ".join(traits))
 	return lines

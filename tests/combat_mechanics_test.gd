@@ -13,6 +13,13 @@ func _ready() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
+	# Tests assert English texts and must not touch the player's settings
+	Settings.settings_path = "user://test_settings.cfg"
+	Settings.language = "en"
+	Settings.apply()
+	# Never touch the real legacy save: runs and corpses go to a scratch file
+	RunState.legacy_path = "user://test_legacy.json"
+	RunState.reset_legacy()
 	await _test_thrust_hits()
 	await _test_light_slash_hits()
 	await _test_slash_lanes_hit_aimed_zone()

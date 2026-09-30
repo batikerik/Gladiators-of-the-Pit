@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_weapon")
 id = &"rusty_gladius"
-display_name = "Ржавый гладиус"
-description = "Короткий меч гладиатора. Ничего особенного — зато никаких слабостей."
+display_name = "Rusty Gladius"
+description = "A gladiator's short sword. Nothing special — but no weaknesses either."
 style = &"gladius"
 base_damage = 18.0
 reach = 60.0

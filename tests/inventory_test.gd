@@ -14,6 +14,13 @@ func _ready() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
+	# Tests assert English texts and must not touch the player's settings
+	Settings.settings_path = "user://test_settings.cfg"
+	Settings.language = "en"
+	Settings.apply()
+	# Never touch the real legacy save: runs and corpses go to a scratch file
+	RunState.legacy_path = "user://test_legacy.json"
+	RunState.reset_legacy()
 	_test_inventory_rules()
 	_test_food_stacks()
 	_test_rest()

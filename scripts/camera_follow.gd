@@ -22,7 +22,7 @@ func _ready() -> void:
 	add_to_group(&"combat_camera")
 
 func add_trauma(amount: float) -> void:
-	_trauma = clampf(_trauma + amount, 0.0, 1.0)
+	_trauma = clampf(_trauma + amount * Settings.screen_shake, 0.0, 1.0)
 
 func _process(delta: float) -> void:
 	# 1. Clear previous frame's shake offset to avoid positional drift

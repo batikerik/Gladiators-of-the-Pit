@@ -90,11 +90,11 @@ func _prompt_text() -> String:
 	var inv := RunState.inventory
 	if item is FoodData:
 		if not inv.can_add(item):
-			return "%s — больше не унести" % item.display_name
-		return "[E] Подобрать: %s (+%d HP)" % [item.display_name, int(item.heal_amount)]
+			return tr("%s — cannot carry more") % tr(item.display_name)
+		return tr("[E] Pick up: %s (+%d HP)") % [tr(item.display_name), int(item.heal_amount)]
 	if item is WeaponData and not inv.can_add(item) and inv.equipped:
-		return "[E] Сменить %s на %s" % [inv.equipped.display_name, item.display_name]
-	return "[E] Подобрать: %s" % item.display_name
+		return tr("[E] Swap %s for %s") % [tr(inv.equipped.display_name), tr(item.display_name)]
+	return tr("[E] Pick up: %s") % tr(item.display_name)
 
 ## Picks the item up into RunState.inventory. Returns false if it does not fit.
 func _take() -> bool:
@@ -109,7 +109,7 @@ func _take() -> bool:
 		get_parent().add_child.call_deferred(swap)
 	if not inv.add(item):
 		if _player:
-			_player.say("Больше не унести.")
+			_player.say(tr("Cannot carry more."))
 		return false
 	if item is WeaponData:
 		inv.equip(item)   # the new weapon goes straight into the hand

@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_weapon")
 id = &"rusty_spear"
-display_name = "Ржавое копьё"
-description = "Держит врага на расстоянии. Укол — главное оружие, рубить им неудобно."
+display_name = "Rusty Spear"
+description = "Keeps the enemy at bay. The thrust is its strength; slashing with it is clumsy."
 style = &"spear"
 base_damage = 15.0
 reach = 96.0

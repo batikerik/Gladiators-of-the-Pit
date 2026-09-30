@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_food")
 id = &"cave_mushroom"
-display_name = "Пещерный гриб"
-description = "Светится в темноте. Проглатывается быстро — можно перекусить прямо в бою."
+display_name = "Cave Mushroom"
+description = "Glows in the dark. Goes down fast — a snack even mid-fight."
 max_stack = 5
 style = &"mushroom"
 heal_amount = 10.0

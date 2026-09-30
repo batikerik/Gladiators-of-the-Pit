@@ -49,7 +49,7 @@ script = ExtResource("5_door")
 
 [node name="Player" parent="." instance=ExtResource("4_combatant")]
 position = Vector2(220, 520)
-character_name = "Вор (Ты)"
+character_name = "Escapee"
 armor_tier = 0
 
 [node name="Opponent" parent="." instance=ExtResource("4_combatant")]

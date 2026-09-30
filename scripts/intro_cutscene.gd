@@ -29,23 +29,23 @@ var _fall_time: float = 0.0
 
 var _dialogues: Array = [
 	{
-		"speaker": "ВЕРХОВНЫЙ СУДЬЯ КРЕПОСТИ",
-		"text": "Вор! Ты посмел покуситься на неприкосновенные запасы зерна в осаждённом городе!",
+		"speaker": "HIGH JUDGE OF THE FORTRESS",
+		"text": "Thief! You dared to touch the sacred grain stores of a city under siege!",
 		"speaker_color": Color(0.9, 0.7, 0.2)
 	},
 	{
-		"speaker": "ТЫ (ОСУЖДЁННЫЙ)",
-		"text": "Люди на нижних улицах умирали с голоду! Дети просили хоть корку хлеба!",
+		"speaker": "YOU (THE CONDEMNED)",
+		"text": "People in the lower streets were starving! Children begged for a crust of bread!",
 		"speaker_color": Color(0.8, 0.8, 0.8)
 	},
 	{
-		"speaker": "ВЕРХОВНЫЙ СУДЬЯ КРЕПОСТИ",
-		"text": "Причины кражи не имеют значения. Важен лишь факт преступления.\nТы приговариваешься к падению в Бездну!",
+		"speaker": "HIGH JUDGE OF THE FORTRESS",
+		"text": "Your reasons do not matter. Only the crime does.\nYou are sentenced to the Abyss!",
 		"speaker_color": Color(0.9, 0.7, 0.2)
 	},
 	{
-		"speaker": "ВЕРХОВНЫЙ СУДЬЯ КРЕПОСТИ",
-		"text": "ЭТО... НАША... ЯМА!!!",
+		"speaker": "HIGH JUDGE OF THE FORTRESS",
+		"text": "THIS... IS... THE PIT!!!",
 		"speaker_color": Color(1.0, 0.2, 0.2)
 	}
 ]
@@ -54,12 +54,12 @@ var _current_dialogue_idx: int = 0
 func _ready() -> void:
 	fade_rect.modulate.a = 1.0
 	create_tween().tween_property(fade_rect, "modulate:a", 0.0, 1.2)
-	prompt_label.text = "[ЛКМ / любая клавиша — далее]   [Esc — пропустить]"
+	prompt_label.text = tr("[LMB / any key — next]   [Esc — skip]")
 	_show_dialogue(0)
 
 func _process(delta: float) -> void:
 	if _camera_shake > 0.0:
-		camera.offset = Vector2(randf_range(-12, 12), randf_range(-12, 12)) * _camera_shake
+		camera.offset = Vector2(randf_range(-12, 12), randf_range(-12, 12)) * _camera_shake * Settings.screen_shake
 		_camera_shake = maxf(0.0, _camera_shake - delta * 2.5)
 	else:
 		camera.offset = Vector2.ZERO
@@ -107,15 +107,15 @@ func _advance_cutscene() -> void:
 			# The shout: judge steps up, screen shakes
 			_camera_shake = 0.5
 			create_tween().tween_property(judge, "position:x", judge.position.x + 22.0, 0.25)
-			prompt_label.text = "[Кликните, чтобы свершилась казнь]"
+			prompt_label.text = tr("[Click to carry out the sentence]")
 	else:
 		_execute_spartan_kick()
 
 func _show_dialogue(idx: int) -> void:
 	var d: Dictionary = _dialogues[idx]
-	speaker_label.text = d["speaker"]
+	speaker_label.text = tr(d["speaker"])
 	speaker_label.modulate = d["speaker_color"]
-	text_label.text = d["text"]
+	text_label.text = tr(d["text"])
 
 func _execute_spartan_kick() -> void:
 	_phase = Phase.KICK

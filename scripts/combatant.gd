@@ -24,6 +24,16 @@ signal defeated
 ## Dropped on death (AI only), in addition to the weapon
 @export var loot: Array[ItemData] = []
 
+@export_group("Toughness")
+## Damage multiplier per covered zone, e.g. {"TORSO": 0.55, "LEGS": 0.7} for plate
+@export var armor_zones: Dictionary = {}
+## Leg hits needed to trip (0 = every leg hit trips, like everyone but the boss)
+@export var poise: int = 0
+
+## Optional decision maker replacing the standard AI (e.g. BossBrain)
+var brain: Node = null
+var _poise_left: int = 0
+
 @export_group("Scripted states")
 @export var armed: bool = true           # false = no weapon until equip_weapon()
 @export var input_enabled: bool = true   # player only: cutscenes / landing lock input
@@ -89,6 +99,7 @@ var _eat_timer: float = 0.0
 
 func _ready() -> void:
 	current_health = max_health
+	_poise_left = poise
 	add_to_group(&"combatants")
 
 	if visual_root and visual_root.has_node("Puppet"):
@@ -116,6 +127,10 @@ func _sync_with_run_state() -> void:
 		# Scene launched straight from the editor: start a run on the spot
 		RunState.new_run()
 	max_health = RunState.player_max_health
+	# Every descent is a new escapee: own name and tunic colour
+	character_name = RunState.thief_name
+	if visual_root and visual_root.has_node("Puppet"):
+		visual_root.get_node("Puppet").set("cloth_color", RunState.thief_cloth)
 	if RunState.player_health <= 0.0:
 		RunState.player_health = max_health   # restarted after a death
 	current_health = RunState.player_health
@@ -179,7 +194,7 @@ func start_eating(food: FoodData) -> bool:
 		weapon.lower_guard()
 	_eating_food = food
 	_eat_timer = food.eat_time
-	say("*жуёт %s*" % food.display_name.to_lower())
+	say(tr("*chews %s*") % tr(food.display_name).to_lower())
 	return true
 
 func _tick_eating(delta: float) -> void:
@@ -197,7 +212,7 @@ func _tick_eating(delta: float) -> void:
 func _interrupt_eating() -> void:
 	if is_eating():
 		_eating_food = null
-		say("Не дали доесть!", Color(1.0, 0.6, 0.4))
+		say(tr("Meal interrupted!"), Color(1.0, 0.6, 0.4))
 
 func _set_weapon_active(active: bool) -> void:
 	weapon.visible = active
@@ -287,7 +302,7 @@ func _process_player_input(_delta: float) -> void:
 		if not foods.is_empty():
 			start_eating(foods[0])
 		else:
-			say("Еды нет...")
+			say(tr("No food..."))
 	_prev_key_q = q
 	var slot_keys: Array[Key] = [KEY_1, KEY_2, KEY_3]
 	for i in 3:
@@ -324,7 +339,7 @@ func _try_switch_weapon(slot: int) -> void:
 	var target: WeaponData = inv.weapons[slot]
 	if target != inv.equipped:
 		inv.equip(target)   # -> _on_equipped_changed
-		say(target.display_name)
+		say(tr(target.display_name))
 
 func _process_player_weapon(delta: float) -> void:
 	if not shoulder_pivot or not weapon or not armed:
@@ -350,6 +365,12 @@ func _process_player_weapon(delta: float) -> void:
 func _process_ai(delta: float) -> void:
 	if not weapon or not ai_enabled or is_eating():
 		return
+	if brain and brain.has_method("tick"):
+		brain.tick(delta)
+		return
+	_process_standard_ai(delta)
+
+func _process_standard_ai(delta: float) -> void:
 
 	var target: CharacterBody2D = _find_opponent()
 	if not target or target.get("is_alive") != true:
@@ -560,10 +581,15 @@ func receive_hit(amount: float, zone_name: String, hit_dir: Vector2,
 	if not is_alive:
 		return
 
+	var blocked: bool = "BLOCK" in tags
+	# Plate armour eats part of the blow on covered zones
+	if not blocked and armor_zones.has(zone_name):
+		amount *= float(armor_zones[zone_name])
+		tags = tags + ["ARMOR"]
+		VFXSpawner.spawn_sparks(get_tree(), global_position + Vector2(0, -8), -hit_dir, Color(0.85, 0.85, 0.9), 10)
 	if not immortal:
 		current_health = maxf(0.0, current_health - amount)
 	_interrupt_eating()
-	var blocked: bool = "BLOCK" in tags
 
 	if blocked:
 		# Guard held: slide back a little, no zone reaction
@@ -586,10 +612,19 @@ func receive_hit(amount: float, zone_name: String, hit_dir: Vector2,
 				_squash_scale = Vector2(1.18, 0.82)
 				_trigger_camera_shake(0.38)
 			"LEGS":
-				is_tripped = true
-				trip_time_left = 0.6
-				rotation = deg_to_rad(-hit_dir.x * 38.0)
-				_squash_scale = Vector2(0.7, 1.32)
+				# Poise: a heavy fighter only goes down after several leg hits,
+				# and then stays down longer
+				_poise_left -= 1
+				if poise <= 0 or _poise_left <= 0:
+					is_tripped = true
+					trip_time_left = 0.6 if poise <= 0 else 1.2
+					_poise_left = poise
+					if poise > 0:
+						say(tr("Down he goes!"), Color(0.4, 0.9, 1.0))
+					rotation = deg_to_rad(-hit_dir.x * 38.0)
+					_squash_scale = Vector2(0.7, 1.32)
+				else:
+					_squash_scale = Vector2(1.1, 0.9)
 				_trigger_camera_shake(0.28)
 		if "COUNTER" in tags:
 			_trigger_camera_shake(0.3)
@@ -598,8 +633,8 @@ func receive_hit(amount: float, zone_name: String, hit_dir: Vector2,
 	_flash_white()
 	if immortal:
 		# No damage to show: name the zone that was hit instead
-		var zone_ru: Dictionary = {"HEAD": "ГОЛОВА!", "TORSO": "ТОРС!", "LEGS": "НОГИ!"}
-		_spawn_popup(zone_ru.get(zone_name, zone_name), Color(0.75, 0.9, 0.6), 18)
+		var zone_text: Dictionary = {"HEAD": "HEAD!", "TORSO": "TORSO!", "LEGS": "LEGS!"}
+		_spawn_popup(tr(zone_text.get(zone_name, zone_name)), Color(0.75, 0.9, 0.6), 18)
 	else:
 		_spawn_damage_indicator(amount, zone_name, tags)
 
@@ -682,6 +717,9 @@ func _spawn_damage_indicator(amount: float, zone_name: String, tags: Array = [])
 	elif zone_name == "LEGS":
 		text = "TRIP! %d" % int(amount)
 		color = Color(0.4, 0.9, 1.0)
+	if "ARMOR" in tags:
+		text = tr("PLATE ") + text
+		color = color.lerp(Color(0.7, 0.72, 0.78), 0.6)
 	if "GUARD BREAK" in tags:
 		text = "GUARD BREAK! " + text
 		color = Color(1.0, 0.3, 0.1)

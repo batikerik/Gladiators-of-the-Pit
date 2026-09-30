@@ -1,0 +1,200 @@
+class_name LocaleRu
+extends RefCounted
+## Russian translation. The game is written in English (source strings are the
+## keys, gettext style); Settings builds a Translation for "ru" from this table.
+## A missing entry simply shows the English text.
+
+const STRINGS: Dictionary = {
+	# ── Intro ────────────────────────────────────────────────────────────────
+	"HIGH JUDGE OF THE FORTRESS": "ВЕРХОВНЫЙ СУДЬЯ КРЕПОСТИ",
+	"Thief! You dared to touch the sacred grain stores of a city under siege!": "Вор! Ты посмел покуситься на неприкосновенные запасы зерна в осаждённом городе!",
+	"YOU (THE CONDEMNED)": "ТЫ (ОСУЖДЁННЫЙ)",
+	"People in the lower streets were starving! Children begged for a crust of bread!": "Люди на нижних улицах умирали с голоду! Дети просили хоть корку хлеба!",
+	"Your reasons do not matter. Only the crime does.\nYou are sentenced to the Abyss!": "Причины кражи не имеют значения. Важен лишь факт преступления.\nТы приговариваешься к падению в Бездну!",
+	"THIS... IS... THE PIT!!!": "ЭТО... НАША... ЯМА!!!",
+	"[LMB / any key — next]   [Esc — skip]": "[ЛКМ / любая клавиша — далее]   [Esc — пропустить]",
+	"[Click to carry out the sentence]": "[Кликните, чтобы свершилась казнь]",
+	# -- Tutorial
+	"Pick up the weapon on the corpse pile": "Подбери оружие на горе трупов",
+	"Hit the head  (cursor above the shoulder)": "Удар в голову  (курсор выше плеча)",
+	"Hit the torso  (cursor at chest level)": "Удар в торс  (курсор на уровне груди)",
+	"Hit the legs  (cursor below the waist) — trips": "Удар по ногам  (курсор ниже пояса) — подсекает",
+	"Finish off the zombie": "Добей зомби",
+	"...still alive?": "...живой?",
+	"Something is glinting over there.": "Там что-то блестит.",
+	"[A / D] Hop   |   [E] Pick up": "[A / D] Прыжок   |   [E] Подобрать",
+	"A gladius. It will do.": "Гладиус. Сойдёт.",
+	"[Hold & release LMB] Slash — cursor height picks the zone   |   [RMB] Thrust   |   [S / Shift] Guard   |   [R] Restart": "[Зажми и отпусти ЛКМ] Удар — высота курсора выбирает зону   |   [ПКМ] Укол   |   [S / Shift] Блок   |   [R] Заново",
+	"Grrrhh...": "Гххррр...",
+	"The zombie will not die until you practise hits\non the head, the torso and the legs": "Зомби не умрёт, пока ты не отработаешь удары\nпо голове, торсу и ногам",
+	"Rrr?!": "Ррр?!",
+	"The zombie is vulnerable now — finish it!": "Зомби стал уязвим — добей его!",
+	"TUTORIAL COMPLETE": "ОБУЧЕНИЕ ПРОЙДЕНО",
+	"Onward — deeper into the catacombs.": "Дальше — глубже в катакомбы.",
+	"OBJECTIVES": "ЗАДАНИЯ",
+	# -- Map
+	"Entrance": "Вход",
+	"This is where they threw you in.": "Сюда тебя сбросили.",
+	"Fight": "Бой",
+	"Someone blocks the way.\nWin, and his weapon is yours.": "Кто-то преграждает путь.\nПобедишь — заберёшь его оружие.",
+	"Cache": "Тайник",
+	"Supplies of the dead: food,\nsometimes a weapon.": "Припасы мёртвых: еда,\nиногда оружие.",
+	"Safe room": "Безопасная комната",
+	"A campfire. Resting costs %d satiety —\nor some health if there is no food.": "Костёр. Отдых стоит %d сытости —\nили части здоровья, если еды нет.",
+	"Master of these catacombs.\nBeyond him — the way up.": "Хозяин этих катакомб.\nЗа ним — выход наверх.",
+	"CATACOMBS": "КАТАКОМБЫ",
+	"Choose the next room:\nclick a glowing circle.": "Выбери следующую комнату:\nкликни по светящемуся кругу.",
+	"Depth: %d of %d\n\nHealth: %d / %d\nWeapon: %s\nFood: %d   (satiety %d)\n\nResting at a campfire\ncosts %d satiety.%s": "Глубина: %d из %d\n\nЗдоровье: %d / %d\nОружие: %s\nЕда: %d   (сытость %d)\n\nОтдых у костра\nстоит %d сытости.%s",
+	"\n\nBody: %s\nat depth %d": "\n\nТело: %s\nна глубине %d",
+	"\n(cleared)": "\n(пройдено)",
+	"\n(you are here)": "\n(ты здесь)",
+	"\n(not reachable yet)": "\n(сюда пока не пройти)",
+	"\n\nA body lies here: %s\nItems on it: %d": "\n\nЗдесь лежит тело: %s\nВещей при нём: %d",
+	# -- Run
+	"Escapee #%d": "Беглец №%d",
+	# -- Enemies
+	"Catacomb Wretch": "Катакомбный доходяга",
+	"Crazed Prisoner": "Обезумевший узник",
+	"Runaway Gladiator": "Гладиатор-беглец",
+	"Bonebreaker": "Костолом",
+	"Executioner of the Pit": "Палач Ямы",
+	# -- Combat room
+	"BOSS: %s\nHis plate stops blows to the body and legs — aim for the head": "БОСС: %s\nЛаты держат удар по телу и ногам — целься в голову",
+	"%s — ENRAGED": "%s — ЯРОСТЬ",
+	"He is enraged! Beware the leap from above": "Он в ярости! Берегись прыжка сверху",
+	"The Armoured Survivor has fallen!\nBeyond the gate — light. Walk towards it.": "Выживший в латах повержен!\nЗа воротами — свет. Иди к нему.",
+	"The way is clear — take the spoils and head for the gate": "Путь свободен — забери трофеи и иди к воротам",
+	# -- Rooms
+	"You took the belongings of %s.\nMay his death not be in vain.": "Ты забрал вещи: %s.\nПусть его смерть будет не напрасной.",
+	# -- Run end screen
+	"in a fight": "в бою",
+	"in a cache": "в тайнике",
+	"by a campfire": "у костра",
+	"in the boss's lair": "в логове босса",
+	"FREEDOM": "СВОБОДА",
+	"YOU FELL IN THE PIT": "ТЫ ПАЛ В ЯМЕ",
+	"%s defeated the Armoured Survivor and climbed out of the Pit.": "%s одолел Выжившего в латах и выбрался из Ямы наверх.",
+	"%s died at depth %d — %s.": "%s погиб на глубине %d — %s.",
+	"in the catacombs": "в катакомбах",
+	"Rooms cleared: %d     Enemies slain: %d     Depth: %d": "Комнат пройдено: %d     Врагов убито: %d     Глубина: %d",
+	"Escapees: %d     Fallen: %d     Escaped: %d     Best depth: %d": "Всего беглецов: %d     Погибло: %d     Выбралось: %d     Лучшая глубина: %d",
+	"He carried nothing. The next escapee will find nothing to take.": "При нём ничего не было. Следующему беглецу нечего будет забрать.",
+	"His body awaits the next escapee at depth %d. On it:": "Его тело ждёт следующего беглеца на глубине %d. При нём:",
+	"Reach the body and it is all yours. Die before that — and it is lost.": "Дойди до тела — и заберёшь всё. Умрёшь раньше — оно пропадёт.",
+	"[Enter] — start over": "[Enter] — начать заново",
+	"[Enter] — next escapee": "[Enter] — следующий беглец",
+	# -- Inventory
+	"Food: %d  [Q] eat   [Tab] inventory": "Еда: %d  [Q] съесть   [Tab] инвентарь",
+	"Health: %d / %d     Satiety stored: %d  (a rest costs %d)": "Здоровье: %d / %d     Сытость в запасе: %d  (отдых стоит %d)",
+	"WEAPONS  %d / %d": "ОРУЖИЕ  %d / %d",
+	"  — in hand": "  — в руке",
+	"Empty. Weapons lie beside the dead.": "Пусто. Оружие лежит у мёртвых.",
+	"FOOD": "ЕДА",
+	"Empty. Without food a rest will cost health.": "Пусто. Без еды отдых отнимет здоровье.",
+	"Choose an item": "Выбери предмет",
+	"Take in hand": "Взять в руку",
+	"Drop": "Выбросить",
+	"Heals: %d HP   Satiety: %d   Eating: %.1f s": "Лечит: %d HP   Сытость: %d   Есть: %.1f с",
+	"Get hit while eating and the meal is lost.": "Если ударят во время еды — не доешь.",
+	"Eat": "Съесть",
+	"INVENTORY": "ИНВЕНТАРЬ",
+	"[Tab] / [I] / [Esc] — close.   Click an item for details.": "[Tab] / [I] / [Esc] — закрыть.   Клик по предмету — подробности.",
+	# -- Weapon stats
+	"Damage: %d   Reach: %d   Weight: %.1f": "Урон: %d   Длина: %d   Вес: %.1f",
+	"Charge: %.2f s   Swing: %.2f s": "Заряд: %.2f с   Удар: %.2f с",
+	"strong thrust": "сильный укол",
+	"mighty swing": "мощный замах",
+	"breaks guards easily": "легко ломает блок",
+	"cuts through guards": "бьёт сквозь блок",
+	"stuns": "оглушает",
+	"quick combos": "быстрые комбо",
+	"Special: ": "Особое: ",
+	# -- Pickups
+	"%s — cannot carry more": "%s — больше не унести",
+	"[E] Pick up: %s (+%d HP)": "[E] Подобрать: %s (+%d HP)",
+	"[E] Swap %s for %s": "[E] Сменить %s на %s",
+	"[E] Pick up: %s": "[E] Подобрать: %s",
+	"Cannot carry more.": "Больше не унести.",
+	# -- Fighters
+	"*chews %s*": "*жуёт %s*",
+	"Meal interrupted!": "Не дали доесть!",
+	"No food...": "Еды нет...",
+	"Down he goes!": "Рухнул!",
+	"PLATE ": "ЛАТЫ ",
+	# -- Boss
+	"ENRAGED!": "ЯРОСТЬ!",
+	"Rrraagh!": "Ррраа!",
+	# -- Campfire
+	"[E] Rest by the fire — eat food (%d satiety)": "[E] Отдохнуть у костра — съесть еду (%d сытости)",
+	"[E] Rest hungry — too little food, hunger will take %d%% HP": "[E] Отдохнуть голодным — еды мало, голод отнимет %d%% HP",
+	# -- Corpse
+	"[E] Search the body: %s (%d items)": "[E] Обыскать тело: %s (%d вещей)",
+	# -- Exit door
+	# -- Cache room
+	"Cache of the dead": "Тайник мертвецов",
+	# -- Safe room
+	"Safe room\nRest by the fire — [E], inventory — [Tab]": "Безопасная комната\nОтдых у костра — [E], инвентарь — [Tab]",
+	"You ate: %s\nHealth fully restored": "Ты съел: %s\nЗдоровье восстановлено полностью",
+	"Not enough food. Sleeping on an empty stomach\ncost %d%% of your health": "Еды не хватило. Сон на пустой желудок\nотнял %d%% здоровья",
+	# -- Misc
+	"HEAD!": "ГОЛОВА!",
+	"TORSO!": "ТОРС!",
+	"LEGS!": "НОГИ!",
+	"[E] Back to the map": "[E] Вернуться к карте",
+	"The Armoured Survivor": "Выживший в латах",
+	# -- Items
+	"Rusty Gladius": "Ржавый гладиус",
+	"A gladiator's short sword. Nothing special — but no weaknesses either.": "Короткий меч гладиатора. Ничего особенного — зато никаких слабостей.",
+	# -- Items
+	"Prisoner's Shiv": "Заточка узника",
+	"Short and light. Strike often: every hit in a chain hurts more than the last.": "Короткая и лёгкая. Бей часто: каждый удар в серии больнее предыдущего.",
+	# -- Items
+	"Rusty Spear": "Ржавое копьё",
+	"Keeps the enemy at bay. The thrust is its strength; slashing with it is clumsy.": "Держит врага на расстоянии. Укол — главное оружие, рубить им неудобно.",
+	# -- Items
+	"Executioner's Axe": "Топор палача",
+	"A heavy charged blow. Even through a guard it cuts to the bone.": "Тяжёлый заряженный удар. Даже в блоке рассекает руку до кости.",
+	# -- Items
+	"Bone Club": "Костяная дубина",
+	"A giant's spiked thigh bone. Slow, but every hit stuns, and a half swing breaks a guard.": "Бедренная кость великана с шипами. Медленная, но каждый удар оглушает, а блок ломает с полузамаха.",
+	# -- Items
+	"Stale Bread": "Чёрствый хлеб",
+	"The very bread that started it all. Hard as stone.": "Тот самый хлеб, из-за которого всё началось. Твёрдый как камень.",
+	# -- Items
+	"Dried Meat": "Вяленое мясо",
+	"Better not to ask whose. Filling, but it takes long to chew.": "Лучше не спрашивать, чьё. Сытно, но жевать долго.",
+	# -- Items
+	"Cave Mushroom": "Пещерный гриб",
+	"Glows in the dark. Goes down fast — a snack even mid-fight.": "Светится в темноте. Проглатывается быстро — можно перекусить прямо в бою.",
+	# -- Scenes
+	"Training Zombie": "Обучающий зомби",
+	# -- Room HUD
+	# -- Scenes
+	"Escapee": "Беглец",
+	"Thief (You)": "Вор (Ты)",
+	"Catacomb Husk": "Катакомбный доходяга",
+	"YOU DIED IN THE PIT\nPress R to Try Again": "ТЫ ПАЛ В ЯМЕ\nНажми R, чтобы попробовать снова",
+	"VICTORY!\nEnemy Defeated\nPress R to Restart": "ПОБЕДА!\nВраг повержен\nНажми R, чтобы начать заново",
+	"[A/D] Hop | [LMB] Slash | [RMB] Thrust | [S] Guard | [E] Pick up | [Q] Eat | [1-3] Weapon | [Tab] Inventory | [R] Restart | [Esc] Pause": "[A/D] Прыжок | [ЛКМ] Удар | [ПКМ] Укол | [S] Блок | [E] Подобрать | [Q] Есть | [1-3] Оружие | [Tab] Инвентарь | [R] Заново | [Esc] Пауза",
+	"[A/D] Hop | [LMB] Slash | [RMB] Thrust | [S] Guard | [E] Take / Go | [Q] Eat | [1-3] Weapon | [Tab] Inventory | [Esc] Pause": "[A/D] Прыжок | [ЛКМ] Удар | [ПКМ] Укол | [S] Блок | [E] Взять / Идти | [Q] Есть | [1-3] Оружие | [Tab] Инвентарь | [Esc] Пауза",
+	# -- Menus & settings
+	"Gladiators of the Catacombs": "Гладиаторы катакомб",
+	"Play": "Играть",
+	"Settings": "Настройки",
+	"Exit": "Выход",
+	"Escapees: %d     Fallen: %d     Escaped: %d": "Беглецов: %d     Погибло: %d     Выбралось: %d",
+	"A body with belongings waits at depth %d.": "Тело с вещами ждёт на глубине %d.",
+	"A vertical slice made with Summer Engine": "Вертикальный срез, сделанный на Summer Engine",
+	"SETTINGS": "НАСТРОЙКИ",
+	"Language": "Язык",
+	"Fullscreen": "Полный экран",
+	"Screen shake": "Тряска экрана",
+	"Erase progress": "Стереть прогресс",
+	"Press again: erase the body and all records": "Нажми ещё раз: стереть тело и все записи",
+	"Back": "Назад",
+	"PAUSED": "ПАУЗА",
+	"Resume": "Продолжить",
+	"Main menu": "Главное меню",
+	"Quit game": "Выйти из игры",
+	"[Enter] — main menu": "[Enter] — в главное меню",
+}

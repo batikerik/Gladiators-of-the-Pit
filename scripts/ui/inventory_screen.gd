@@ -60,9 +60,15 @@ func _process(_delta: float) -> void:
 		elif playable:
 			open()
 	_prev_toggle = toggle
-	if is_open() and (Input.is_key_pressed(KEY_ESCAPE) or player == null):
+	if is_open() and player == null:
 		close()
 	_quick_bar.visible = playable and not is_open()
+
+## Esc closes the inventory (and is consumed, so the pause menu stays shut).
+func _input(event: InputEvent) -> void:
+	if is_open() and event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
+		get_viewport().set_input_as_handled()
+		close()
 
 func open() -> void:
 	_screen.visible = true
@@ -86,7 +92,7 @@ func _refresh() -> void:
 		icon.item = w
 		var style: StyleBoxFlat = slot.get_theme_stylebox("panel")
 		style.border_color = ACCENT if w != null and w == inv.equipped else Color(0.3, 0.26, 0.2)
-	_quick_food.text = "Еда: %d  [Q] съесть   [Tab] инвентарь" % inv.food_count()
+	_quick_food.text = tr("Food: %d  [Q] eat   [Tab] inventory") % inv.food_count()
 
 	if not is_open():
 		return
@@ -95,26 +101,26 @@ func _refresh() -> void:
 	_fill_details(inv)
 	var player := _player()
 	var hp: float = player.current_health if player else RunState.player_health
-	_status_label.text = "Здоровье: %d / %d     Сытость в запасе: %d  (отдых стоит %d)" % [
+	_status_label.text = tr("Health: %d / %d     Satiety stored: %d  (a rest costs %d)") % [
 		int(hp), int(RunState.player_max_health), inv.total_satiety(), RunState.REST_SATIETY_COST]
 
 func _fill_weapon_list(inv: Inventory) -> void:
 	_clear(_weapon_list)
-	_weapon_list.add_child(_section_label("ОРУЖИЕ  %d / %d" % [inv.weapons.size(), Inventory.MAX_WEAPONS]))
+	_weapon_list.add_child(_section_label(tr("WEAPONS  %d / %d") % [inv.weapons.size(), Inventory.MAX_WEAPONS]))
 	for i in inv.weapons.size():
 		var w := inv.weapons[i]
-		var tag := "  — в руке" if w == inv.equipped else ""
-		_weapon_list.add_child(_item_row(w, "[%d] %s%s" % [i + 1, w.display_name, tag]))
+		var tag := tr("  — in hand") if w == inv.equipped else ""
+		_weapon_list.add_child(_item_row(w, "[%d] %s%s" % [i + 1, tr(w.display_name), tag]))
 	if inv.weapons.is_empty():
-		_weapon_list.add_child(_dim_label("Пусто. Оружие лежит у мёртвых."))
+		_weapon_list.add_child(_dim_label(tr("Empty. Weapons lie beside the dead.")))
 
 func _fill_food_list(inv: Inventory) -> void:
 	_clear(_food_list)
-	_food_list.add_child(_section_label("ЕДА"))
+	_food_list.add_child(_section_label(tr("FOOD")))
 	for f in inv.foods():
-		_food_list.add_child(_item_row(f, "%s  x%d" % [f.display_name, inv.count_of(f)]))
+		_food_list.add_child(_item_row(f, "%s  x%d" % [tr(f.display_name), inv.count_of(f)]))
 	if inv.foods().is_empty():
-		_food_list.add_child(_dim_label("Пусто. Без еды отдых отнимет здоровье."))
+		_food_list.add_child(_dim_label(tr("Empty. Without food a rest will cost health.")))
 
 func _fill_details(inv: Inventory) -> void:
 	for child in _details_text.get_parent().get_children():
@@ -122,24 +128,24 @@ func _fill_details(inv: Inventory) -> void:
 			child.queue_free()
 	if _selected == null or (not inv.weapons.has(_selected) and inv.count_of(_selected) == 0):
 		_selected = null
-		_details_title.text = "Выбери предмет"
+		_details_title.text = tr("Choose an item")
 		_details_icon.item = null
 		_details_text.text = ""
 		return
-	_details_title.text = _selected.display_name
+	_details_title.text = tr(_selected.display_name)
 	_details_icon.item = _selected
-	var lines := PackedStringArray([_selected.description, ""])
+	var lines := PackedStringArray([tr(_selected.description), ""])
 	var actions := _details_text.get_parent()
 	if _selected is WeaponData:
 		lines.append_array(_selected.stat_lines())
 		if _selected != inv.equipped:
-			actions.add_child(_button("Взять в руку", _on_equip_pressed))
-		actions.add_child(_button("Выбросить", _on_drop_pressed))
+			actions.add_child(_button(tr("Take in hand"), _on_equip_pressed))
+		actions.add_child(_button(tr("Drop"), _on_drop_pressed))
 	elif _selected is FoodData:
-		lines.append("Лечит: %d HP   Сытость: %d   Есть: %.1f с" % [
+		lines.append(tr("Heals: %d HP   Satiety: %d   Eating: %.1f s") % [
 			int(_selected.heal_amount), _selected.satiety, _selected.eat_time])
-		lines.append("Если ударят во время еды — не доешь.")
-		actions.add_child(_button("Съесть", _on_eat_pressed))
+		lines.append(tr("Get hit while eating and the meal is lost."))
+		actions.add_child(_button(tr("Eat"), _on_eat_pressed))
 	_details_text.text = "\n".join(lines)
 
 # ── Actions ──────────────────────────────────────────────────────────────────
@@ -230,7 +236,7 @@ func _build_screen() -> void:
 	panel.add_child(root)
 
 	var title := Label.new()
-	title.text = "ИНВЕНТАРЬ"
+	title.text = tr("INVENTORY")
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", ACCENT)
 	root.add_child(title)
@@ -273,7 +279,7 @@ func _build_screen() -> void:
 	_status_label.add_theme_font_size_override("font_size", 15)
 	_status_label.add_theme_color_override("font_color", TEXT)
 	root.add_child(_status_label)
-	root.add_child(_dim_label("[Tab] / [I] / [Esc] — закрыть.   Клик по предмету — подробности."))
+	root.add_child(_dim_label(tr("[Tab] / [I] / [Esc] — close.   Click an item for details.")))
 
 func _item_row(item: ItemData, text: String) -> Button:
 	var b := Button.new()

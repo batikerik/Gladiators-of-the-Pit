@@ -4,21 +4,23 @@ extends RefCounted
 
 ## Enemy archetypes. min_depth gates the tougher ones; health grows with depth.
 const ENEMIES: Array[Dictionary] = [
-	{"name": "Катакомбный доходяга", "zombie": true, "armor": 0, "weapons": [&"prisoner_dagger", &"rusty_gladius"],
+	{"name": "Catacomb Wretch", "zombie": true, "armor": 0, "weapons": [&"prisoner_dagger", &"rusty_gladius"],
 		"health": 70.0, "aggression": 0.8, "min_depth": 1},
-	{"name": "Обезумевший узник", "zombie": false, "armor": 0, "weapons": [&"prisoner_dagger", &"rusty_spear"],
+	{"name": "Crazed Prisoner", "zombie": false, "armor": 0, "weapons": [&"prisoner_dagger", &"rusty_spear"],
 		"health": 80.0, "aggression": 1.0, "min_depth": 1},
-	{"name": "Гладиатор-беглец", "zombie": false, "armor": 1, "weapons": [&"rusty_gladius", &"rusty_spear"],
+	{"name": "Runaway Gladiator", "zombie": false, "armor": 1, "weapons": [&"rusty_gladius", &"rusty_spear"],
 		"health": 100.0, "aggression": 1.1, "min_depth": 2},
-	{"name": "Костолом", "zombie": true, "armor": 0, "weapons": [&"bone_club"],
+	{"name": "Bonebreaker", "zombie": true, "armor": 0, "weapons": [&"bone_club"],
 		"health": 110.0, "aggression": 1.0, "min_depth": 2},
-	{"name": "Палач Ямы", "zombie": false, "armor": 1, "weapons": [&"iron_axe"],
+	{"name": "Executioner of the Pit", "zombie": false, "armor": 1, "weapons": [&"iron_axe"],
 		"health": 120.0, "aggression": 1.2, "min_depth": 3},
 ]
 
-## Placeholder boss until Milestone 5 gives him his own AI
-const BOSS: Dictionary = {"name": "Выживший в латах", "zombie": false, "armor": 2,
-	"weapons": [&"iron_axe"], "health": 180.0, "aggression": 1.3, "min_depth": 0}
+## The first boss: plate on torso and legs (the head is the weak spot), needs
+## 3 leg hits to go down, driven by BossBrain instead of the standard AI
+const BOSS: Dictionary = {"name": "The Armoured Survivor", "zombie": false, "armor": 2,
+	"weapons": [&"iron_axe"], "health": 180.0, "aggression": 1.3, "min_depth": 0,
+	"armor_zones": {"TORSO": 0.55, "LEGS": 0.7}, "poise": 3, "brain": true}
 
 const FOODS: Array[StringName] = [&"stale_bread", &"stale_bread", &"cave_mushroom", &"dried_meat"]
 const WEAPONS: Array[StringName] = [&"prisoner_dagger", &"rusty_gladius", &"rusty_spear", &"iron_axe", &"bone_club"]
@@ -49,6 +51,9 @@ static func combat(depth: int, rng: RandomNumberGenerator, boss: bool = false) -
 		"health": base["health"] if boss else roundf(base["health"] * (1.0 + HEALTH_PER_DEPTH * maxi(depth - 1, 0))),
 		"aggression": base["aggression"],
 		"loot": loot,
+		"armor_zones": base.get("armor_zones", {}),
+		"poise": base.get("poise", 0),
+		"brain": base.get("brain", false),
 	}
 
 ## Items lying in a cache room: 2 food, often a weapon you do not carry yet.

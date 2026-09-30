@@ -28,6 +28,12 @@ Source: .summer/GameSoul.md (2026-09-29)
 - [x] Room transition & encounter generation — the boss room uses a placeholder profile until Milestone 5
 
 ## Milestone 5: Death, Corpse Run & First Boss Encounter
-- [ ] Permadeath & Corpse Run logic: save player death coordinates/room ID, spawn corpse loot pile for subsequent run
-- [ ] First Boss encounter: Armored Human Survivor with aggressive hopping AI, defensive stances, and weapon swings
-- [ ] Victory & defeat flow for the vertical slice
+- [x] Permadeath & Corpse Run logic: save player death coordinates/room ID, spawn corpse loot pile for subsequent run
+- [x] First Boss encounter: Armored Human Survivor with aggressive hopping AI, defensive stances, and weapon swings
+- [x] Victory & defeat flow for the vertical slice
+
+## Milestone 6: Main Menu, Settings & English Localisation
+- [x] Main menu: title screen over the living catacomb arena — Play, Settings, Exit
+- [x] Settings (saved to disk): language, fullscreen, screen shake, erase progress
+- [x] Pause menu on Esc: Resume, Settings, Main menu, Quit
+- [x] The whole game in English (source language), Russian kept as a translation switchable in Settings

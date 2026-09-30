@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_food")
 id = &"dried_meat"
-display_name = "Вяленое мясо"
-description = "Лучше не спрашивать, чьё. Сытно, но жевать долго."
+display_name = "Dried Meat"
+description = "Better not to ask whose. Filling, but it takes long to chew."
 max_stack = 5
 style = &"meat"
 heal_amount = 30.0

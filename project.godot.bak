@@ -10,14 +10,16 @@ config_version=5
 
 [application]
 
-config/name="gladiators"
-run/main_scene="res://scenes/intro_cutscene.tscn"
+config/name="The Pit"
+run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 
+Settings="*res://scripts/settings.gd"
 RunState="*res://scripts/run_state.gd"
 InventoryScreen="*res://scripts/ui/inventory_screen.gd"
+PauseMenu="*res://scripts/ui/pause_menu.gd"
 
 [display]
 

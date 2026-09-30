@@ -35,7 +35,7 @@ func _find_and_bind_combatants() -> void:
 				c.health_changed.connect(_on_player_health_changed)
 				c.defeated.connect(_on_player_defeated)
 				if player_name_label:
-					player_name_label.text = c.character_name
+					player_name_label.text = tr(c.character_name)
 				if player_bar:
 					player_bar.max_value = c.max_health
 					player_bar.value = c.current_health
@@ -44,7 +44,7 @@ func _find_and_bind_combatants() -> void:
 				c.health_changed.connect(_on_enemy_health_changed)
 				c.defeated.connect(_on_enemy_defeated)
 				if enemy_name_label:
-					enemy_name_label.text = c.character_name
+					enemy_name_label.text = tr(c.character_name)
 				if enemy_bar:
 					enemy_bar.max_value = c.max_health
 					enemy_bar.value = c.current_health
@@ -61,12 +61,12 @@ func _on_enemy_health_changed(current_hp: float, _max_hp: float) -> void:
 
 func _on_player_defeated() -> void:
 	if message_label and show_end_messages:
-		message_label.text = "YOU DIED IN THE PIT\nPress R to Try Again"
+		message_label.text = tr("YOU DIED IN THE PIT\nPress R to Try Again")
 		message_label.modulate = Color(1.0, 0.2, 0.2)
 
 func _on_enemy_defeated() -> void:
 	if message_label and show_end_messages:
-		message_label.text = "VICTORY!\nEnemy Defeated\nPress R to Restart"
+		message_label.text = tr("VICTORY!\nEnemy Defeated\nPress R to Restart")
 		message_label.modulate = Color(0.3, 1.0, 0.4)
 
 func _unhandled_input(event: InputEvent) -> void:

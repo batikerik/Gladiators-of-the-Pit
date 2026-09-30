@@ -12,6 +12,13 @@ func _ready() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
+	# Tests assert English texts and must not touch the player's settings
+	Settings.settings_path = "user://test_settings.cfg"
+	Settings.language = "en"
+	Settings.apply()
+	# Never touch the real legacy save: runs and corpses go to a scratch file
+	RunState.legacy_path = "user://test_legacy.json"
+	RunState.reset_legacy()
 	# Scene changes free the current scene. Hand that role to a placeholder so
 	# this runner (also a child of root) survives map/room switches.
 	var placeholder := Node.new()
@@ -151,20 +158,20 @@ func _test_encounters() -> void:
 	var shallow_ok := true
 	for i in 60:
 		var e := Encounters.combat(1, rng)
-		if e["name"] in ["Гладиатор-беглец", "Костолом", "Палач Ямы"]:
+		if e["name"] in ["Runaway Gladiator", "Bonebreaker", "Executioner of the Pit"]:
 			shallow_ok = false
 	_check(shallow_ok, "depth 1 only rolls the weakest enemies")
 	var deep_names := {}
 	for i in 200:
 		deep_names[Encounters.combat(5, rng)["name"]] = true
-	_check(deep_names.has("Палач Ямы"), "deep layers can roll the executioner")
+	_check(deep_names.has("Executioner of the Pit"), "deep layers can roll the executioner")
 	rng.seed = 1
 	var h1: float = Encounters.combat(1, rng)["health"]
 	rng.seed = 1
 	var h5: float = Encounters.combat(5, rng)["health"]
 	_check(h5 > h1, "enemies get tougher with depth (%.0f -> %.0f)" % [h1, h5])
 	var boss := Encounters.combat(6, rng, true)
-	_check(boss["name"] == "Выживший в латах" and boss["armor"] == 2, "boss profile: armoured survivor")
+	_check(boss["name"] == "The Armoured Survivor" and boss["armor"] == 2, "boss profile: armoured survivor")
 	_check(Encounters.cache(3, rng).size() >= 2, "a cache holds at least two items")
 	var invalid := RunState.enter_node(RunState.map[-1]["id"])
 	_check(invalid == "", "cannot jump to a room that is not next on the path")
@@ -246,7 +253,7 @@ func _test_boss_room() -> void:
 	var boss := _stand_before(CatacombMapGen.BOSS)
 	_go(RunState.enter_node(boss["id"]))
 	var room: CombatRoom = await _wait_scene("CombatRoom")
-	_check(room != null and room.opponent.character_name == "Выживший в латах", "the boss node brings the armoured survivor")
+	_check(room != null and room.opponent.character_name == "The Armoured Survivor", "the boss node brings the armoured survivor")
 	if room == null:
 		return
 	_check(room.opponent.max_health >= 180.0 and room.opponent.armor_tier == 2, "boss: %d HP, plate armour" % int(room.opponent.max_health))
@@ -262,12 +269,12 @@ func _test_death_restarts() -> void:
 	_go(RunState.enter_node(first["id"]))
 	var room: CombatRoom = await _wait_scene("CombatRoom")
 	room.player.receive_hit(999.0, "HEAD", Vector2.LEFT, 0.0, room.opponent, [])
-	await _frames(5)
-	var key := InputEventKey.new()
-	key.keycode = KEY_R
-	key.pressed = true
-	Input.parse_input_event(key)
+	var end_screen: RunEndScreen = await _wait_scene("RunEndScreen", 400)
+	_check(end_screen != null and not end_screen.result["victory"], "death leads to the run end screen")
+	if end_screen == null:
+		return
+	end_screen.continue_game()   # what [Enter] does
 	var map_screen := await _wait_scene("CatacombMap")
-	_check(map_screen != null, "[R] after death goes to a fresh map")
+	_check(map_screen != null, "the next thief starts on a fresh map")
 	_check(RunState.current_node()["type"] == CatacombMapGen.START and RunState.inventory.weapons.is_empty(),
 		"a new descent: back at the entrance, pockets empty")

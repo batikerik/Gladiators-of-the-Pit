@@ -34,8 +34,8 @@ func _process(delta: float) -> void:
 	_label.visible = near
 	if near:
 		var fed: bool = RunState.inventory.total_satiety() >= RunState.REST_SATIETY_COST
-		_label.text = "[E] Отдохнуть у костра — съесть еду (%d сытости)" % RunState.REST_SATIETY_COST if fed \
-			else "[E] Отдохнуть голодным — еды мало, голод отнимет %d%% HP" % int(RunState.HUNGER_PENALTY * 100)
+		_label.text = tr("[E] Rest by the fire — eat food (%d satiety)") % RunState.REST_SATIETY_COST if fed \
+			else tr("[E] Rest hungry — too little food, hunger will take %d%% HP") % int(RunState.HUNGER_PENALTY * 100)
 		_label.global_position = global_position + Vector2(-_label.size.x * 0.5, -140)
 	var e := Input.is_key_pressed(KEY_E)
 	if near and e and not _prev_e:

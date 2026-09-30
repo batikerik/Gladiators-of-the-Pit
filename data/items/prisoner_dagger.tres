@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_weapon")
 id = &"prisoner_dagger"
-display_name = "Заточка узника"
-description = "Короткая и лёгкая. Бей часто: каждый удар в серии больнее предыдущего."
+display_name = "Prisoner's Shiv"
+description = "Short and light. Strike often: every hit in a chain hurts more than the last."
 style = &"dagger"
 base_damage = 11.0
 reach = 36.0

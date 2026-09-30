@@ -173,5 +173,5 @@ theme_override_constants/margin_bottom = 14
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.75, 0.7, 0.75)
 theme_override_font_sizes/font_size = 14
-text = "[A/D] Hop | [LMB] Slash | [RMB] Thrust | [S/Shift] Guard / Parry | [E] Pick up | [Q] Eat | [1-3] Weapon | [Tab] Inventory | [R] Restart"
+text = "[A/D] Hop | [LMB] Slash | [RMB] Thrust | [S] Guard | [E] Pick up | [Q] Eat | [1-3] Weapon | [Tab] Inventory | [R] Restart | [Esc] Pause"
 horizontal_alignment = 1

@@ -13,7 +13,7 @@ func _setup_room() -> void:
 	if RunState.room_cleared:
 		campfire.rest_available = false
 	open_exit()
-	flash_message("Безопасная комната\nОтдых у костра — [E], инвентарь — [Tab]", 3.0)
+	flash_message(tr("Safe room\nRest by the fire — [E], inventory — [Tab]"), 3.0)
 
 func _on_rest() -> void:
 	player.input_enabled = false
@@ -27,10 +27,10 @@ func _on_rest() -> void:
 	if result["fed"]:
 		var names := PackedStringArray()
 		for food in result["eaten"]:
-			names.append(food.display_name)
-		text = "Ты съел: %s\nЗдоровье восстановлено полностью" % ", ".join(names)
+			names.append(tr(food.display_name))
+		text = tr("You ate: %s\nHealth fully restored") % ", ".join(names)
 	else:
-		text = "Еды не хватило. Сон на пустой желудок\nотнял %d%% здоровья" % int(RunState.HUNGER_PENALTY * 100)
+		text = tr("Not enough food. Sleeping on an empty stomach\ncost %d%% of your health") % int(RunState.HUNGER_PENALTY * 100)
 
 	await get_tree().create_timer(0.8).timeout
 	create_tween().tween_property(_fade, "modulate:a", 0.0, 0.6)

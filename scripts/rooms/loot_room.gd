@@ -16,5 +16,5 @@ func _setup_room() -> void:
 			pickup.item = items[i]
 			pickup.position = Vector2(470.0 + i * 150.0, SPAWN_Y)
 			add_child(pickup)
-		flash_message("Тайник мертвецов", 2.0)
+		flash_message(tr("Cache of the dead"), 2.0)
 	open_exit()

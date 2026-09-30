@@ -5,11 +5,11 @@ extends Node2D
 
 ## [title, description] per room type (a var: it reads RunState)
 var type_info: Dictionary = {
-	&"start":  ["Вход", "Сюда тебя сбросили."],
-	&"combat": ["Бой", "Кто-то преграждает путь.\nПобедишь — заберёшь его оружие."],
-	&"loot":   ["Тайник", "Припасы мёртвых: еда,\nиногда оружие."],
-	&"safe":   ["Безопасная комната", "Костёр. Отдых стоит %d сытости —\nили части здоровья, если еды нет." % RunState.REST_SATIETY_COST],
-	&"boss":   ["Выживший в латах", "Хозяин этих катакомб.\nЗа ним — выход наверх."],
+	&"start":  ["Entrance", "This is where they threw you in."],
+	&"combat": ["Fight", "Someone blocks the way.\nWin, and his weapon is yours."],
+	&"loot":   ["Cache", "Supplies of the dead: food,\nsometimes a weapon."],
+	&"safe":   ["Safe room", "A campfire. Resting costs %d satiety —\nor some health if there is no food."],
+	&"boss":   ["The Armoured Survivor", "Master of these catacombs.\nBeyond him — the way up."],
 }
 const NODE_RADIUS: float = 24.0
 const INK := Color(0.28, 0.18, 0.1)
@@ -53,9 +53,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if _hover_id >= 0:
 			travel_to(_hover_id)
-	elif event is InputEventKey and event.pressed and event.keycode == KEY_R and RunState.boss_defeated:
-		RunState.new_run()
-		get_tree().reload_current_scene()
 
 ## Walk the figurine to a room and load it. Public so tests can drive it.
 func travel_to(id: int) -> void:
@@ -116,6 +113,7 @@ func _draw() -> void:
 			draw_line(n["pos"] + Vector2(-14, -14), n["pos"] + Vector2(14, 14), Color(0.55, 0.1, 0.08, 0.8), 3.0)
 			draw_line(n["pos"] + Vector2(14, -14), n["pos"] + Vector2(-14, 14), Color(0.55, 0.1, 0.08, 0.8), 3.0)
 
+	_draw_corpse_marker()
 	_draw_token(_token_pos + Vector2(0, -NODE_RADIUS - 2))
 
 	# Legend icons on small paper discs (labels are in the UI layer)
@@ -123,6 +121,21 @@ func _draw() -> void:
 		var p := LEGEND_POS + Vector2(0, i * LEGEND_STEP)
 		draw_circle(p, 16.0, PAPER)
 		_draw_icon(LEGEND[i], p, 1.0)
+
+## The previous thief's body: a small bag and skull beside its room
+func _draw_corpse_marker() -> void:
+	if RunState.corpse_node_id < 0:
+		return
+	var n := RunState.map_node(RunState.corpse_node_id)
+	if n.is_empty():
+		return
+	var p: Vector2 = n["pos"] + Vector2(NODE_RADIUS + 4, -NODE_RADIUS + 2)
+	var pulse: float = 0.5 + 0.5 * sin(_t * 2.5)
+	draw_circle(p, 13.0 + pulse * 2.0, Color(0.5, 0.7, 1.0, 0.25 + 0.2 * pulse))
+	draw_circle(p + Vector2(-3, 3), 7.0, Color(0.42, 0.36, 0.26))     # bag
+	draw_circle(p + Vector2(4, -3), 6.0, Color(0.86, 0.82, 0.7))      # skull
+	draw_rect(Rect2(p + Vector2(1, -5), Vector2(2, 2)), INK)
+	draw_rect(Rect2(p + Vector2(5, -5), Vector2(2, 2)), INK)
 
 func _dotted(a: Vector2, b: Vector2, color: Color, solid: bool) -> void:
 	var from := a + (b - a).normalized() * (NODE_RADIUS + 4.0)
@@ -197,7 +210,7 @@ func _build_ui() -> void:
 	add_child(layer)
 
 	var title := Label.new()
-	title.text = "КАТАКОМБЫ"
+	title.text = tr("CATACOMBS")
 	title.position = Vector2(40, 36)
 	title.add_theme_font_size_override("font_size", 28)
 	title.add_theme_color_override("font_color", GOLD)
@@ -212,13 +225,13 @@ func _build_ui() -> void:
 
 	var legend := Label.new()
 	legend.position = Vector2(1010, 60)
-	legend.text = "Выбери следующую комнату:\nкликни по светящемуся кругу."
+	legend.text = tr("Choose the next room:\nclick a glowing circle.")
 	legend.add_theme_font_size_override("font_size", 14)
 	legend.add_theme_color_override("font_color", Color(0.75, 0.7, 0.62))
 	layer.add_child(legend)
 	for i in LEGEND.size():
 		var l := Label.new()
-		l.text = type_info[LEGEND[i]][0]
+		l.text = tr(type_info[LEGEND[i]][0])
 		l.position = Vector2(LEGEND_POS.x + 32, LEGEND_POS.y + i * LEGEND_STEP - 11)
 		l.add_theme_font_size_override("font_size", 15)
 		l.add_theme_color_override("font_color", Color(0.85, 0.8, 0.7))
@@ -244,8 +257,7 @@ func _build_ui() -> void:
 	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_banner.position = Vector2(340, 300)
 	_banner.size = Vector2(600, 120)
-	_banner.visible = RunState.boss_defeated
-	_banner.text = "Выживший в латах повержен.\nНаверху забрезжил свет...\n\n[R] — новый спуск"
+	_banner.visible = false
 	layer.add_child(_banner)
 
 	_fade = ColorRect.new()
@@ -256,11 +268,12 @@ func _build_ui() -> void:
 
 func _refresh_info() -> void:
 	var inv := RunState.inventory
-	var weapon: String = inv.equipped.display_name if inv.equipped else "—"
-	_info.text = "Глубина: %d из %d\n\nЗдоровье: %d / %d\nОружие: %s\nЕда: %d   (сытость %d)\n\nОтдых у костра\nстоит %d сытости." % [
+	var weapon: String = tr(inv.equipped.display_name) if inv.equipped else "—"
+	_info.text = tr("Depth: %d of %d\n\nHealth: %d / %d\nWeapon: %s\nFood: %d   (satiety %d)\n\nResting at a campfire\ncosts %d satiety.%s") % [
 		RunState.depth(), CatacombMapGen.LAYERS_BETWEEN + 1,
 		int(RunState.player_health), int(RunState.player_max_health),
-		weapon, inv.food_count(), inv.total_satiety(), RunState.REST_SATIETY_COST]
+		weapon, inv.food_count(), inv.total_satiety(), RunState.REST_SATIETY_COST,
+		(tr("\n\nBody: %s\nat depth %d") % [RunState.corpse_name(), RunState.map_node(RunState.corpse_node_id)["layer"]]) if RunState.corpse_node_id >= 0 else ""]
 
 func _update_tooltip(mouse: Vector2) -> void:
 	var hovered: Dictionary = {}
@@ -273,10 +286,13 @@ func _update_tooltip(mouse: Vector2) -> void:
 	var info: Array = type_info[hovered["type"]]
 	var suffix := ""
 	if hovered["visited"] and hovered["id"] != RunState.current_node_id:
-		suffix = "\n(пройдено)"
+		suffix = tr("\n(cleared)")
 	elif hovered["id"] == RunState.current_node_id:
-		suffix = "\n(ты здесь)"
+		suffix = tr("\n(you are here)")
 	elif not RunState.available_nodes().has(hovered):
-		suffix = "\n(сюда пока не пройти)"
-	_tooltip.text = "%s\n%s%s" % [info[0], info[1], suffix]
+		suffix = tr("\n(not reachable yet)")
+	if hovered["id"] == RunState.corpse_node_id:
+		var c := RunState.corpse()
+		suffix += tr("\n\nA body lies here: %s\nItems on it: %d") % [RunState.corpse_name(), c.get("items", []).size()]
+	_tooltip.text = "%s\n%s%s" % [tr(info[0]), tr(info[1]).replace("%d", str(RunState.REST_SATIETY_COST)), suffix]
 	_tooltip.position = mouse + Vector2(20, 12)

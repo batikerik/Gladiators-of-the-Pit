@@ -6,7 +6,7 @@ extends Node2D
 signal used
 
 @export var use_range: float = 80.0
-@export var prompt_text: String = "[E] Вернуться к карте"
+@export var prompt_text: String = "[E] Back to the map"
 
 var is_open: bool = false
 var _lift: float = 0.0       # 0 = bars down, 1 = bars up
@@ -20,7 +20,7 @@ func _ready() -> void:
 	_label = Label.new()
 	_label.top_level = true
 	_label.z_index = 60
-	_label.text = prompt_text
+	_label.text = tr(prompt_text)
 	_label.add_theme_font_size_override("font_size", 15)
 	_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.55))
 	_label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.05))

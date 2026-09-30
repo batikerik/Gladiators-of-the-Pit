@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_weapon")
 id = &"iron_axe"
-display_name = "Топор палача"
-description = "Тяжёлый заряженный удар. Даже в блоке рассекает руку до кости."
+display_name = "Executioner's Axe"
+description = "A heavy charged blow. Even through a guard it cuts to the bone."
 style = &"axe"
 base_damage = 21.0
 reach = 52.0

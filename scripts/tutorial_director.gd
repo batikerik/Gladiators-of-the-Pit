@@ -17,11 +17,11 @@ var _step: Step = Step.FALLING
 @onready var message_label: Label = $HUD/CenterContainer/MessageLabel
 
 const OBJECTIVES: Array = [
-	["weapon", "Подбери оружие на горе трупов"],
-	["HEAD",   "Удар в голову  (курсор выше плеча)"],
-	["TORSO",  "Удар в торс  (курсор на уровне груди)"],
-	["LEGS",   "Удар по ногам  (курсор ниже пояса) — подсекает"],
-	["finish", "Добей зомби"],
+	["weapon", "Pick up the weapon on the corpse pile"],
+	["HEAD",   "Hit the head  (cursor above the shoulder)"],
+	["TORSO",  "Hit the torso  (cursor at chest level)"],
+	["LEGS",   "Hit the legs  (cursor below the waist) — trips"],
+	["finish", "Finish off the zombie"],
 ]
 const COLOR_TODO := Color(0.85, 0.82, 0.75)
 const COLOR_DONE := Color(0.45, 0.95, 0.45)
@@ -59,24 +59,24 @@ func _on_landed() -> void:
 	_step = Step.LANDED
 	player.land_heavy(1.0)
 	await get_tree().create_timer(0.9).timeout
-	player.say("...живой?")
+	player.say(tr("...still alive?"))
 	await get_tree().create_timer(1.3).timeout
-	player.say("Там что-то блестит.")
+	player.say(tr("Something is glinting over there."))
 	player.input_enabled = true
 	_step = Step.PICKUP
 	_show_panel()
-	hint_label.text = "[A / D] Прыжок   |   [E] Подобрать"
+	hint_label.text = tr("[A / D] Hop   |   [E] Pick up")
 
 func _on_weapon_picked(_item: ItemData) -> void:
 	# The pickup put the gladius into RunState.inventory, which armed the player
 	_complete("weapon")
-	player.say("Гладиус. Сойдёт.")
+	player.say(tr("A gladius. It will do."))
 	_step = Step.ZONES
-	hint_label.text = "[Зажми и отпусти ЛКМ] Удар — высота курсора выбирает зону   |   [ПКМ] Укол   |   [S / Shift] Блок   |   [R] Заново"
+	hint_label.text = tr("[Hold & release LMB] Slash — cursor height picks the zone   |   [RMB] Thrust   |   [S / Shift] Guard   |   [R] Restart")
 	await get_tree().create_timer(0.8).timeout
 	zombie.ai_enabled = true
-	zombie.say("Гххррр...", Color(0.6, 0.85, 0.5))
-	_flash_message("Зомби не умрёт, пока ты не отработаешь удары\nпо голове, торсу и ногам", 3.5)
+	zombie.say(tr("Grrrhh..."), Color(0.6, 0.85, 0.5))
+	_flash_message(tr("The zombie will not die until you practise hits\non the head, the torso and the legs"), 3.5)
 
 func _on_zombie_hit(_amount: float, zone: String, _hp: float, _max_hp: float) -> void:
 	if _step != Step.ZONES or not _zones_hit.has(zone) or _zones_hit[zone]:
@@ -86,14 +86,14 @@ func _on_zombie_hit(_amount: float, zone: String, _hp: float, _max_hp: float) ->
 	if _zones_hit.values().all(func(done: bool) -> bool: return done):
 		_step = Step.FINISH
 		zombie.immortal = false
-		zombie.say("Ррр?!", Color(0.6, 0.85, 0.5))
-		_flash_message("Зомби стал уязвим — добей его!", 2.5)
+		zombie.say(tr("Rrr?!"), Color(0.6, 0.85, 0.5))
+		_flash_message(tr("The zombie is vulnerable now — finish it!"), 2.5)
 
 func _on_zombie_defeated() -> void:
 	_complete("finish")
 	_step = Step.DONE
-	_flash_message("ОБУЧЕНИЕ ПРОЙДЕНО", 3.0)
-	player.say("Дальше — глубже в катакомбы.")
+	_flash_message(tr("TUTORIAL COMPLETE"), 3.0)
+	player.say(tr("Onward — deeper into the catacombs."))
 	await get_tree().create_timer(2.5).timeout
 	var tw := create_tween()
 	tw.tween_property(_fade, "modulate:a", 1.0, 1.0)
@@ -117,14 +117,14 @@ func _build_objective_panel() -> void:
 	_panel.add_child(vbox)
 
 	var title := Label.new()
-	title.text = "ЗАДАНИЯ"
+	title.text = tr("OBJECTIVES")
 	title.add_theme_font_size_override("font_size", 18)
 	title.add_theme_color_override("font_color", Color(0.95, 0.75, 0.3))
 	vbox.add_child(title)
 
 	for entry in OBJECTIVES:
 		var label := Label.new()
-		label.text = "[  ]  " + entry[1]
+		label.text = "[  ]  " + tr(entry[1])
 		label.add_theme_font_size_override("font_size", 15)
 		label.add_theme_color_override("font_color", COLOR_TODO)
 		vbox.add_child(label)

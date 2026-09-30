@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1_weapon")
 id = &"bone_club"
-display_name = "Костяная дубина"
-description = "Бедренная кость великана с шипами. Медленная, но каждый удар оглушает, а блок ломает с полузамаха."
+display_name = "Bone Club"
+description = "A giant's spiked thigh bone. Slow, but every hit stuns, and a half swing breaks a guard."
 style = &"club"
 base_damage = 23.0
 reach = 50.0

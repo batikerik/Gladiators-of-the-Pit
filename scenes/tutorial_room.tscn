@@ -75,7 +75,7 @@ stuck = true
 
 [node name="Player" parent="." instance=ExtResource("5_combatant")]
 position = Vector2(265, -380)
-character_name = "Вор (Ты)"
+character_name = "Escapee"
 armor_tier = 0
 armed = false
 input_enabled = false
@@ -83,7 +83,7 @@ input_enabled = false
 [node name="Zombie" parent="." instance=ExtResource("5_combatant")]
 position = Vector2(960, 520)
 is_player = false
-character_name = "Обучающий зомби"
+character_name = "Training Zombie"
 max_health = 60.0
 hop_force_x = 110.0
 is_zombie = true
