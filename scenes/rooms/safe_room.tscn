@@ -1,0 +1,63 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/rooms/safe_room.gd" id="1_director"]
+[ext_resource type="Script" path="res://scripts/catacombs_arena.gd" id="2_arena"]
+[ext_resource type="Script" path="res://scripts/camera_follow.gd" id="3_camera"]
+[ext_resource type="PackedScene" path="res://scenes/combatant.tscn" id="4_combatant"]
+[ext_resource type="Script" path="res://scripts/rooms/exit_door.gd" id="5_door"]
+[ext_resource type="PackedScene" path="res://scenes/ui/room_hud.tscn" id="6_hud"]
+[ext_resource type="Script" path="res://scripts/rooms/room_decor.gd" id="7_decor"]
+[ext_resource type="Script" path="res://scripts/rooms/campfire.gd" id="8_campfire"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
+size = Vector2(1400, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(60, 900)
+
+[node name="SafeRoom" type="Node2D"]
+script = ExtResource("1_director")
+
+[node name="CatacombsVisuals" type="Node2D" parent="."]
+script = ExtResource("2_arena")
+
+[node name="Decor" type="Node2D" parent="."]
+script = ExtResource("7_decor")
+style = "camp"
+[node name="ArenaColliders" type="StaticBody2D" parent="."]
+collision_mask = 0
+
+[node name="Floor" type="CollisionShape2D" parent="ArenaColliders"]
+position = Vector2(640, 610)
+shape = SubResource("RectangleShape2D_floor")
+
+[node name="LeftWall" type="CollisionShape2D" parent="ArenaColliders"]
+position = Vector2(30, 360)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="RightWall" type="CollisionShape2D" parent="ArenaColliders"]
+position = Vector2(1250, 360)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="Ceiling" type="CollisionShape2D" parent="ArenaColliders"]
+position = Vector2(640, -30)
+shape = SubResource("RectangleShape2D_floor")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(640, 480)
+script = ExtResource("3_camera")
+
+[node name="ExitDoor" type="Node2D" parent="."]
+position = Vector2(1150, 580)
+script = ExtResource("5_door")
+
+[node name="Player" parent="." instance=ExtResource("4_combatant")]
+position = Vector2(220, 520)
+character_name = "Вор (Ты)"
+armor_tier = 0
+
+[node name="Campfire" type="Node2D" parent="."]
+position = Vector2(640, 580)
+script = ExtResource("8_campfire")
+
+[node name="HUD" parent="." instance=ExtResource("6_hud")]

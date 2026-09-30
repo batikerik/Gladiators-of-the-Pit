@@ -150,6 +150,10 @@ func equip_weapon(data: WeaponData = null) -> void:
 	shoulder_pivot.rotation = Weapon.LANE_MID_ANGLE
 	_squash_scale = Vector2(0.85, 1.2)
 
+func set_health(value: float) -> void:
+	current_health = clampf(value, 0.0, max_health)
+	_emit_health()
+
 func heal(amount: float) -> void:
 	if not is_alive:
 		return
@@ -410,7 +414,7 @@ func _process_ai(delta: float) -> void:
 		w.ai_start_thrust(target.global_position + Vector2(0, -36))
 		_ai_state = AIState.RETREAT
 		_ai_timer = 0.45
-		_ai_attack_cooldown = randf_range(0.4, 0.7)
+		_ai_attack_cooldown = randf_range(0.4, 0.7) / ai_aggression
 
 	match _ai_state:
 		AIState.APPROACH:
@@ -445,7 +449,7 @@ func _process_ai(delta: float) -> void:
 				w.ai_release(shoulder_pivot, _ai_charge_target_angle)
 				_ai_state = AIState.RETREAT
 				_ai_timer = randf_range(0.3, 0.55)
-				_ai_attack_cooldown = randf_range(0.5, 0.9)
+				_ai_attack_cooldown = randf_range(0.5, 0.9) / ai_aggression
 				if is_on_floor():
 					_perform_hop(-toward)  # back off after strike
 
@@ -465,7 +469,7 @@ func _process_ai(delta: float) -> void:
 				w.ai_start_thrust(target.global_position + Vector2(0, -4))
 				_ai_state = AIState.RETREAT
 				_ai_timer = 0.4
-				_ai_attack_cooldown = randf_range(0.4, 0.7)
+				_ai_attack_cooldown = randf_range(0.4, 0.7) / ai_aggression
 			elif _ai_timer <= 0.0 or not w.is_guarding():
 				w.ai_guard(false)
 				_ai_state = AIState.FOOTSIE
@@ -479,7 +483,7 @@ func _ai_choose_attack(target: Node2D, tw: Weapon, dist: float, toward: float) -
 		w.ai_start_thrust(target.global_position + zone_offsets.pick_random())
 		_ai_state = AIState.RETREAT
 		_ai_timer = 0.5
-		_ai_attack_cooldown = randf_range(0.5, 0.9)
+		_ai_attack_cooldown = randf_range(0.5, 0.9) / ai_aggression
 		return
 
 	if dist > w.slash_range():

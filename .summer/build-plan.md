@@ -23,9 +23,9 @@ Source: .summer/GameSoul.md (2026-09-29)
 - [x] Food system (consumable resources required to rest safely) — `RunState.rest()` ready; the rest UI comes with the Safe Room (Milestone 4)
 
 ## Milestone 4: Node Map & Safe Room (Inscryption Style)
-- [ ] Node-based room progression map (Combat, Loot/Cache, Safe Room, Boss)
-- [ ] Safe Room scene: Campfire/rest station, inventory management, food consumption to prevent HP loss
-- [ ] Room transition & encounter generation
+- [x] Node-based room progression map (Combat, Loot/Cache, Safe Room, Boss)
+- [x] Safe Room scene: Campfire/rest station, inventory management, food consumption to prevent HP loss
+- [x] Room transition & encounter generation — the boss room uses a placeholder profile until Milestone 5
 
 ## Milestone 5: Death, Corpse Run & First Boss Encounter
 - [ ] Permadeath & Corpse Run logic: save player death coordinates/room ID, spawn corpse loot pile for subsequent run

@@ -1,7 +1,7 @@
 extends Node
 ## Headless run of the whole tutorial: fall onto the pile -> pick up the sword ->
 ## hit the zombie in head, torso, legs -> it turns mortal -> kill it -> the
-## scene moves on to the arena. The player's weapon is commanded through the
+## scene moves on to the descent map. The player's weapon is commanded through the
 ## Weapon API (no mouse in headless), everything else runs as in the game.
 ##
 ## Run: Summer.exe --headless --path . res://tests/tutorial_flow_test.tscn
@@ -76,7 +76,7 @@ func _run() -> void:
 	var room_id: int = room.get_instance_id()
 	await _wait_until(func() -> bool:
 		return get_tree().current_scene != null and get_tree().current_scene.get_instance_id() != room_id, 600)
-	_check(get_tree().current_scene != null and get_tree().current_scene.name == "Arena", "tutorial hands over to the arena")
+	_check(get_tree().current_scene != null and get_tree().current_scene.name == "CatacombMap", "tutorial hands over to the descent map")
 
 	print("TUTORIAL TEST: %s (%d failures)" % ["PASS" if _failures == 0 else "FAIL", _failures])
 	get_tree().quit(1 if _failures > 0 else 0)

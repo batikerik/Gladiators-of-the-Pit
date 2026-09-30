@@ -8,6 +8,11 @@ extends Camera2D
 @export var max_zoom: float = 1.35
 @export var arena_min_x: float = 100.0
 @export var arena_max_x: float = 1180.0
+## Drawn room edges: the view never shows past them
+@export var world_left: float = 0.0
+@export var world_right: float = 1280.0
+## Zoom when only the thief is in the room (cache, campfire)
+@export var solo_zoom: float = 1.15
 
 var _trauma: float = 0.0
 var _shake_offset: Vector2 = Vector2.ZERO
@@ -45,6 +50,14 @@ func _process(delta: float) -> void:
 	elif combatants.size() == 1:
 		var target_pos: Vector2 = (combatants[0] as Node2D).global_position + Vector2(0, -60)
 		global_position = global_position.lerp(target_pos, 6.0 * delta)
+		zoom = zoom.lerp(Vector2(solo_zoom, solo_zoom), 4.0 * delta)
+
+	# Keep the view inside the room: half the visible width from each edge
+	if combatants.size() >= 1:
+		var half_w: float = get_viewport_rect().size.x * 0.5 / zoom.x
+		var lo: float = world_left + half_w
+		var hi: float = world_right - half_w
+		global_position.x = (lo + hi) * 0.5 if lo > hi else clampf(global_position.x, lo, hi)
 	
 	# 3. Apply trauma shake
 	if _trauma > 0.0:

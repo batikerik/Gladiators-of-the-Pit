@@ -1,9 +1,17 @@
 extends Node
 ## Autoload "RunState": everything about the current descent that must survive
-## scene changes — the inventory and the thief's health — plus the rest rule
-## the Safe Room (Milestone 4) will call.
+## scene changes — the inventory, the thief's health and the room map with the
+## thief's position on it — plus the rest rule used by the safe room.
 
 signal inventory_replaced
+
+const MAP_SCENE := "res://scenes/catacomb_map.tscn"
+const ROOM_SCENES: Dictionary = {
+	&"combat": "res://scenes/rooms/combat_room.tscn",
+	&"boss": "res://scenes/rooms/combat_room.tscn",
+	&"loot": "res://scenes/rooms/loot_room.tscn",
+	&"safe": "res://scenes/rooms/safe_room.tscn",
+}
 
 ## Satiety points a safe rest costs (bread = 1, dried meat = 2)
 const REST_SATIETY_COST: int = 2
@@ -28,11 +36,69 @@ var player_health: float = 100.0
 ## launched directly from the editor
 var run_active: bool = false
 
-func new_run() -> void:
+## The descent's room map (see CatacombMapGen) and where the thief stands on it
+var run_seed: int = 0
+var map: Array[Dictionary] = []
+var current_node_id: int = 0
+## Set when the thief is inside a room and has not cleared it yet
+var room_cleared: bool = false
+var boss_defeated: bool = false
+
+func new_run(seed_value: int = -1) -> void:
 	inventory = Inventory.new()
 	player_health = player_max_health
 	run_active = true
+	run_seed = seed_value if seed_value >= 0 else randi()
+	map = CatacombMapGen.generate(run_seed)
+	current_node_id = map[0]["id"]
+	map[0]["visited"] = true
+	room_cleared = true
+	boss_defeated = false
 	inventory_replaced.emit()
+
+# ── Map ──────────────────────────────────────────────────────────────────────
+func map_node(id: int) -> Dictionary:
+	for n in map:
+		if n["id"] == id:
+			return n
+	return {}
+
+func current_node() -> Dictionary:
+	return map_node(current_node_id)
+
+## Rooms the thief may walk into next (only after clearing the current one)
+func available_nodes() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if not room_cleared:
+		return result
+	for id in current_node()["next"]:
+		result.append(map_node(id))
+	return result
+
+## Move onto a map node; returns the room scene to load ("" if not allowed).
+func enter_node(id: int) -> String:
+	var target := map_node(id)
+	if target.is_empty() or not available_nodes().has(target):
+		return ""
+	current_node_id = id
+	target["visited"] = true
+	room_cleared = false
+	return ROOM_SCENES[target["type"]]
+
+## The room's director calls this when its exit opens.
+func clear_current_room() -> void:
+	room_cleared = true
+	if current_node()["type"] == CatacombMapGen.BOSS:
+		boss_defeated = true
+
+## Deterministic RNG for the room at the current node (same room, same enemy)
+func room_rng() -> RandomNumberGenerator:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = run_seed * 1000 + current_node_id
+	return rng
+
+func depth() -> int:
+	return int(current_node().get("layer", 1))
 
 func get_item(id: StringName) -> ItemData:
 	return load(ITEM_PATHS[id]) as ItemData

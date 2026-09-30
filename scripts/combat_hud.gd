@@ -11,6 +11,8 @@ extends CanvasLayer
 
 ## false = a scene director (e.g. the tutorial) owns the end-of-fight flow
 @export var show_end_messages: bool = true
+## false = a scene director handles [R] (map rooms start a new descent instead)
+@export var restart_reloads_scene: bool = true
 
 var player_combatant: CharacterBody2D = null
 var enemy_combatant: CharacterBody2D = null
@@ -19,6 +21,10 @@ func _ready() -> void:
 	if message_label:
 		message_label.text = ""
 	_find_and_bind_combatants()
+	# Rooms without an enemy (cache, campfire) show only the thief's bar
+	var enemy_box: Control = get_node_or_null("MarginContainer/VBoxTop/HBoxBars/EnemyBox")
+	if enemy_box:
+		enemy_box.modulate.a = 1.0 if enemy_combatant else 0.0
 
 func _find_and_bind_combatants() -> void:
 	var combatants: Array = get_tree().get_nodes_in_group(&"combatants")
@@ -65,5 +71,5 @@ func _on_enemy_defeated() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.is_pressed() and not event.is_echo():
-		if event.keycode == KEY_R:
+		if event.keycode == KEY_R and restart_reloads_scene:
 			get_tree().reload_current_scene()

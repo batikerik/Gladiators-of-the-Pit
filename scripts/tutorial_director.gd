@@ -4,7 +4,7 @@ extends Node2D
 ## harmless, immortal zombie in the head, torso and legs -> it becomes mortal,
 ## finish it -> fade into the first real fight.
 
-@export var next_scene_path: String = "res://main.tscn"
+@export var next_scene_path: String = "res://scenes/catacomb_map.tscn"
 
 enum Step { FALLING, LANDED, PICKUP, ZONES, FINISH, DONE }
 var _step: Step = Step.FALLING
