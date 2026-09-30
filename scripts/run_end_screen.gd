@@ -58,9 +58,9 @@ func _build_text() -> void:
 
 	var sub_text: String
 	if victory:
-		sub_text = tr("%s defeated the Armoured Survivor and climbed out of the Pit.") % RunState.escapee_name(int(result.get("runner", 1)))
+		sub_text = tr("%s defeated the Armoured Survivor and climbed out of the Pit.") % RunState.escapee_name(int(result.get("runner", 1)), str(result.get("nick", "")))
 	else:
-		sub_text = tr("%s died at depth %d — %s.") % [RunState.escapee_name(int(result.get("runner", 1))), result["depth"],
+		sub_text = tr("%s died at depth %d — %s.") % [RunState.escapee_name(int(result.get("runner", 1)), str(result.get("nick", ""))), result["depth"],
 			tr(ROOM_NAMES.get(result.get("room_type", "combat"), "in the catacombs"))]
 	_label(layer, sub_text, 20, Color(0.9, 0.86, 0.78)).position = Vector2(0, 200)
 

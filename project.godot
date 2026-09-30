@@ -20,6 +20,7 @@ Settings="*res://scripts/settings.gd"
 RunState="*res://scripts/run_state.gd"
 InventoryScreen="*res://scripts/ui/inventory_screen.gd"
 PauseMenu="*res://scripts/ui/pause_menu.gd"
+Music="*res://scripts/music.gd"
 
 [display]
 

@@ -71,6 +71,38 @@ func _build() -> void:
 	shake_row.add_child(value_label)
 	_box.add_child(_row(tr("Screen shake"), shake_row))
 
+	# Music volume
+	var music_row := HBoxContainer.new()
+	music_row.add_theme_constant_override("separation", 12)
+	var music := HSlider.new()
+	music.min_value = 0
+	music.max_value = 100
+	music.step = 5
+	music.value = Settings.music_volume * 100.0
+	music.custom_minimum_size = Vector2(220, 24)
+	var music_label := UiStyle.make_label("%d%%" % int(music.value), 18)
+	music_label.custom_minimum_size = Vector2(56, 0)
+	music.value_changed.connect(func(v: float) -> void:
+		music_label.text = "%d%%" % int(v)
+		Settings.music_volume = v / 100.0
+		Music._apply_volume())
+	music.drag_ended.connect(func(_changed: bool) -> void: Settings.set_music_volume(music.value / 100.0))
+	music_row.add_child(music)
+	music_row.add_child(music_label)
+	_box.add_child(_row(tr("Music volume"), music_row))
+
+	# Nickname
+	var nick := LineEdit.new()
+	nick.text = Settings.nickname
+	nick.max_length = Settings.NICKNAME_MAX
+	nick.placeholder_text = tr("Escapee")
+	nick.custom_minimum_size = Vector2(280, 36)
+	nick.text_submitted.connect(func(t: String) -> void: Settings.set_nickname(t))
+	nick.focus_exited.connect(func() -> void:
+		if nick.text.strip_edges() != Settings.nickname:
+			Settings.set_nickname(nick.text))
+	_box.add_child(_row(tr("Nickname"), nick))
+
 	# Erase progress (two presses)
 	var lg := RunState.legacy
 	var reset_text := tr("Erase progress")

@@ -54,7 +54,8 @@ var boss_defeated: bool = false
 var thief_no: int = 1
 var thief_name: String:
 	get:
-		return escapee_name(thief_no)
+		# The player's nickname when set, the numbered escapee otherwise
+		return Settings.nickname if Settings.nickname != "" else escapee_name(thief_no)
 var thief_cloth: Color = Color(0.65, 0.2, 0.2)
 var stats: Dictionary = {"kills": 0, "rooms": 0, "max_depth": 0}
 
@@ -113,11 +114,14 @@ func reset_legacy() -> void:
 	if FileAccess.file_exists(legacy_path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(legacy_path))
 
-func escapee_name(n: int) -> String:
+## "Nick (#3)" when a nickname was used, "Escapee #3" otherwise
+func escapee_name(n: int, nick: String = "") -> String:
+	if nick != "":
+		return "%s (#%d)" % [nick, n]
 	return tr("Escapee #%d") % n
 
 func corpse_name() -> String:
-	return escapee_name(int(corpse().get("runner", 0)))
+	return escapee_name(int(corpse().get("runner", 0)), str(corpse().get("nick", "")))
 
 func corpse() -> Dictionary:
 	return legacy.get("corpse", {})
@@ -136,11 +140,11 @@ func record_death(x: float) -> void:
 	legacy["deaths"] = int(legacy.get("deaths", 0)) + 1
 	legacy["best_depth"] = maxi(int(legacy.get("best_depth", 0)), stats["max_depth"])
 	legacy["corpse"] = {
-		"runner": thief_no, "layer": int(node.get("layer", 1)), "room_type": String(node.get("type", "combat")),
+		"runner": thief_no, "nick": Settings.nickname, "layer": int(node.get("layer", 1)), "room_type": String(node.get("type", "combat")),
 		"x": x, "items": items,
 	}
 	save_legacy()
-	last_result = {"victory": false, "runner": thief_no, "depth": int(node.get("layer", 1)),
+	last_result = {"victory": false, "runner": thief_no, "nick": Settings.nickname, "depth": int(node.get("layer", 1)),
 		"room_type": String(node.get("type", "combat")), "stats": stats.duplicate(), "corpse_items": items}
 	run_active = false
 
@@ -148,7 +152,7 @@ func record_victory() -> void:
 	legacy["victories"] = int(legacy.get("victories", 0)) + 1
 	legacy["best_depth"] = maxi(int(legacy.get("best_depth", 0)), stats["max_depth"])
 	save_legacy()
-	last_result = {"victory": true, "runner": thief_no, "depth": stats["max_depth"],
+	last_result = {"victory": true, "runner": thief_no, "nick": Settings.nickname, "depth": stats["max_depth"],
 		"room_type": "boss", "stats": stats.duplicate(), "corpse_items": []}
 	run_active = false
 

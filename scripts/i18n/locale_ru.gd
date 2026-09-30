@@ -197,4 +197,10 @@ const STRINGS: Dictionary = {
 	"Main menu": "Главное меню",
 	"Quit game": "Выйти из игры",
 	"[Enter] — main menu": "[Enter] — в главное меню",
+	# -- Nickname & music
+	"What is your name, thief?": "Как тебя зовут, вор?",
+	"Shown above your health bar. Leave it empty to stay a nameless escapee.": "Имя будет над полоской здоровья. Оставь пустым — останешься безымянным беглецом.",
+	"Begin": "Начать",
+	"Music volume": "Громкость музыки",
+	"Nickname": "Никнейм",
 }

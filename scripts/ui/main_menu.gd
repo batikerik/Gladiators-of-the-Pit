@@ -10,6 +10,8 @@ var _t: float = 0.0
 var _ui: CanvasLayer
 var _menu: VBoxContainer
 var _settings: SettingsPanel
+var _name_panel: PanelContainer
+var _name_edit: LineEdit
 var _fade: ColorRect
 var _leaving: bool = false
 var _dust: Array[Vector3] = []   # x, y, speed
@@ -87,6 +89,8 @@ func _build_ui() -> void:
 	_settings.closed.connect(_close_settings)
 	_ui.add_child(_settings)
 
+	_build_name_panel()
+
 	_fade = ColorRect.new()
 	_fade.color = Color.BLACK
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -110,10 +114,64 @@ func _rebuild_texts() -> void:
 	else:
 		stats.text = ""
 	(_ui.get_node("Hint") as Label).text = tr("A vertical slice made with Summer Engine")
+	if _name_panel:
+		(_name_panel.find_child("NameTitle", true, false) as Label).text = tr("What is your name, thief?")
+		(_name_panel.find_child("NameHint", true, false) as Label).text = tr("Shown above your health bar. Leave it empty to stay a nameless escapee.")
+		(_name_panel.find_child("Begin", true, false) as Button).text = tr("Begin")
+		(_name_panel.find_child("NameBack", true, false) as Button).text = tr("Back")
+		_name_edit.placeholder_text = tr("Escapee")
 
+## Play first asks for the thief's name (remembered in Settings).
 func _on_play() -> void:
 	if _leaving:
 		return
+	_menu.visible = false
+	_name_panel.visible = true
+	_name_edit.text = Settings.nickname
+	_name_edit.grab_focus()
+	_name_edit.select_all()
+
+func _build_name_panel() -> void:
+	_name_panel = PanelContainer.new()
+	_name_panel.add_theme_stylebox_override("panel", UiStyle.panel_box())
+	_name_panel.position = Vector2(120, 290)
+	_name_panel.visible = false
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	_name_panel.add_child(box)
+	var title := UiStyle.make_label("", 26, UiStyle.GOLD)
+	title.name = "NameTitle"
+	box.add_child(title)
+	_name_edit = LineEdit.new()
+	_name_edit.max_length = Settings.NICKNAME_MAX
+	_name_edit.custom_minimum_size = Vector2(420, 48)
+	_name_edit.add_theme_font_size_override("font_size", 24)
+	_name_edit.text_submitted.connect(func(_t: String) -> void: _begin())
+	box.add_child(_name_edit)
+	var hint := UiStyle.make_label("", 14, UiStyle.TEXT_DIM)
+	hint.name = "NameHint"
+	box.add_child(hint)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var begin := UiStyle.make_button("", _begin, 22, 200)
+	begin.name = "Begin"
+	row.add_child(begin)
+	var back := UiStyle.make_button("", _cancel_name, 22, 200)
+	back.name = "NameBack"
+	row.add_child(back)
+	box.add_child(row)
+	_ui.add_child(_name_panel)
+
+func _cancel_name() -> void:
+	_name_panel.visible = false
+	_menu.visible = true
+	(_menu.get_node("Play") as Button).grab_focus()
+
+## Save the name and start the descent.
+func _begin() -> void:
+	if _leaving:
+		return
+	Settings.set_nickname(_name_edit.text)
 	_leaving = true
 	var tw := create_tween()
 	tw.tween_property(_fade, "modulate:a", 1.0, 0.6)

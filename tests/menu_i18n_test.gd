@@ -166,14 +166,23 @@ func _test_main_menu() -> void:
 	_press_esc()
 	await _frames(3)
 	_check(not PauseMenu.is_open(), "no pause menu on the title screen")
+	_check(Music.current_track == &"tavern", "the menu plays Cozy Tavern Hearth")
 	play.pressed.emit()
-	_check(await _wait_scene("IntroCutscene") != null, "Play starts the intro")
+	_check(menu._name_panel.visible and not menu._menu.visible, "Play first asks for the thief's name")
+	menu._name_edit.text = "Spartacus the Great Thief"
+	menu._name_edit.text_submitted.emit(menu._name_edit.text)
+	_check(Settings.nickname == "Spartacus the Gr", "the name is trimmed to %d letters and saved" % Settings.NICKNAME_MAX)
+	_check(await _wait_scene("IntroCutscene") != null, "Begin starts the intro")
+	RunState.new_run(5)
+	_check(RunState.thief_name == "Spartacus the Gr" and RunState.escapee_name(3, "Spartacus") == "Spartacus (#3)",
+		"the nickname is the thief's name; bodies read 'Nick (#3)'")
 
 func _test_pause_menu() -> void:
 	print("pause menu")
 	RunState.new_run(77)
 	get_tree().change_scene_to_file(RunState.MAP_SCENE)
 	await _wait_scene("CatacombMap")
+	_check(Music.current_track == &"tavern", "the map keeps the tavern music")
 	_press_esc()
 	await _frames(3)
 	_check(PauseMenu.is_open() and get_tree().paused, "Esc on the map pauses the game")
@@ -182,7 +191,11 @@ func _test_pause_menu() -> void:
 	_check(not PauseMenu.is_open() and not get_tree().paused, "Esc again resumes")
 
 	get_tree().change_scene_to_file(RunState.enter_node(RunState.available_nodes()[0]["id"]))
-	await _wait_scene("CombatRoom")
+	var fight_room: CombatRoom = await _wait_scene("CombatRoom")
+	await _frames(2)
+	_check(Music.current_track == &"fight", "fights play Skirmish on the Road")
+	_check(fight_room.hud.player_name_label.text == "Spartacus the Gr", "the nickname sits above the health bar")
+	Settings.nickname = ""
 	InventoryScreen.open()
 	await _frames(1)
 	_press_esc()
