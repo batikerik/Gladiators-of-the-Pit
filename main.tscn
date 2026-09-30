@@ -155,5 +155,5 @@ theme_override_constants/margin_bottom = 14
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.75, 0.7, 0.75)
 theme_override_font_sizes/font_size = 14
-text = "[A / D] Hop Forward/Back  |  [Mouse] Swing & Aim Weapon  |  [R] Restart Combat"
+text = "[A / D] Hop  |  [Hold LMB] Slash (full charge breaks guard)  |  [RMB] Thrust  |  [S / Shift] Guard, raise on impact = Parry  |  [R] Restart"
 horizontal_alignment = 1

@@ -46,6 +46,33 @@ static func spawn_hit_impact(tree: SceneTree, pos: Vector2, hit_dir: Vector2, zo
 	if zone == "HEAD":
 		_apply_hitstop(tree, 0.04)
 
+## Metal-on-metal burst for blocks, parries and clashes.
+static func spawn_sparks(tree: SceneTree, pos: Vector2, dir: Vector2, color: Color, amount: int = 14) -> void:
+	if not tree or not tree.current_scene:
+		return
+	var sparks := CPUParticles2D.new()
+	sparks.emitting = false
+	sparks.one_shot = true
+	sparks.explosiveness = 1.0
+	sparks.amount = amount
+	sparks.lifetime = 0.3
+	sparks.position = pos
+	sparks.spread = 70.0
+	sparks.gravity = Vector2(0, 380)
+	sparks.initial_velocity_min = 140.0
+	sparks.initial_velocity_max = 300.0
+	sparks.direction = dir
+	sparks.color = color
+	sparks.scale_amount_min = 1.5
+	sparks.scale_amount_max = 3.0
+	sparks.z_index = 30
+	tree.current_scene.add_child(sparks)
+	sparks.restart()
+	tree.create_timer(0.4).timeout.connect(sparks.queue_free)
+
+static func apply_hitstop(tree: SceneTree, duration: float) -> void:
+	_apply_hitstop(tree, duration)
+
 static func _apply_hitstop(tree: SceneTree, duration: float) -> void:
 	Engine.time_scale = 0.1
 	var timer := tree.create_timer(duration, true, false, true)

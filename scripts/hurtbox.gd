@@ -29,6 +29,7 @@ func _ready() -> void:
 	set_meta("zone", zone_str)
 	set_meta("multiplier", damage_multiplier)
 
-func receive_hit(amount: float, zone_name: String, hit_dir: Vector2, swing_speed: float, attacker: Node2D) -> void:
+func receive_hit(amount: float, zone_name: String, hit_dir: Vector2, swing_speed: float,
+		attacker: Node2D, tags: Array = []) -> void:
 	if parent_combatant and parent_combatant.has_method("receive_hit"):
-		parent_combatant.receive_hit(amount, zone_name, hit_dir, swing_speed, attacker)
+		parent_combatant.receive_hit(amount, zone_name, hit_dir, swing_speed, attacker, tags)
