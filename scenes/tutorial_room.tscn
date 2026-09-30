@@ -1,0 +1,181 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://scripts/tutorial_director.gd" id="1_director"]
+[ext_resource type="Script" path="res://scripts/catacombs_arena.gd" id="2_arena"]
+[ext_resource type="Script" path="res://scripts/tutorial_decor.gd" id="3_decor"]
+[ext_resource type="Script" path="res://scripts/camera_follow.gd" id="4_camera"]
+[ext_resource type="PackedScene" path="res://scenes/combatant.tscn" id="5_combatant"]
+[ext_resource type="Script" path="res://scripts/weapon_pickup.gd" id="6_pickup"]
+[ext_resource type="Script" path="res://scripts/weapon_renderer.gd" id="7_renderer"]
+[ext_resource type="Script" path="res://scripts/combat_hud.gd" id="8_hud"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
+size = Vector2(1400, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(60, 1800)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bar_bg"]
+bg_color = Color(0.12, 0.1, 0.15, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_player_hp"]
+bg_color = Color(0.2, 0.75, 0.35, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_enemy_hp"]
+bg_color = Color(0.45, 0.6, 0.35, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="TutorialRoom" type="Node2D"]
+script = ExtResource("1_director")
+
+[node name="CatacombsVisuals" type="Node2D" parent="."]
+script = ExtResource("2_arena")
+
+[node name="Decor" type="Node2D" parent="."]
+script = ExtResource("3_decor")
+
+[node name="ArenaColliders" type="StaticBody2D" parent="."]
+collision_mask = 0
+
+[node name="Floor" type="CollisionShape2D" parent="ArenaColliders"]
+position = Vector2(640, 610)
+shape = SubResource("RectangleShape2D_floor")
+
+[node name="LeftWall" type="CollisionShape2D" parent="ArenaColliders"]
+position = Vector2(30, -200)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="RightWall" type="CollisionShape2D" parent="ArenaColliders"]
+position = Vector2(1250, -200)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="CorpsePile" type="CollisionPolygon2D" parent="ArenaColliders"]
+polygon = PackedVector2Array(130, 580, 180, 548, 230, 520, 270, 512, 310, 522, 360, 552, 400, 580)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(560, -150)
+script = ExtResource("4_camera")
+
+[node name="WeaponPickup" type="Node2D" parent="."]
+position = Vector2(338, 520)
+rotation = 1.8
+script = ExtResource("6_pickup")
+
+[node name="WeaponRenderer" type="Node2D" parent="WeaponPickup"]
+position = Vector2(-40, 0)
+script = ExtResource("7_renderer")
+
+[node name="Player" parent="." instance=ExtResource("5_combatant")]
+position = Vector2(265, -380)
+character_name = "Вор (Ты)"
+armor_tier = 0
+armed = false
+input_enabled = false
+
+[node name="Zombie" parent="." instance=ExtResource("5_combatant")]
+position = Vector2(960, 520)
+is_player = false
+character_name = "Обучающий зомби"
+max_health = 60.0
+hop_force_x = 110.0
+is_zombie = true
+armor_tier = 0
+armed = false
+ai_enabled = false
+ai_passive = true
+immortal = true
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("8_hud")
+show_end_messages = false
+
+[node name="MarginContainer" type="MarginContainer" parent="HUD"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 90.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 40
+
+[node name="VBoxTop" type="VBoxContainer" parent="HUD/MarginContainer"]
+layout_mode = 2
+
+[node name="HBoxBars" type="HBoxContainer" parent="HUD/MarginContainer/VBoxTop"]
+layout_mode = 2
+theme_override_constants/separation = 60
+
+[node name="PlayerBox" type="VBoxContainer" parent="HUD/MarginContainer/VBoxTop/HBoxBars"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PlayerName" type="Label" parent="HUD/MarginContainer/VBoxTop/HBoxBars/PlayerBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="PlayerHP" type="ProgressBar" parent="HUD/MarginContainer/VBoxTop/HBoxBars/PlayerBox"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_player_hp")
+value = 100.0
+show_percentage = false
+
+[node name="EnemyBox" type="VBoxContainer" parent="HUD/MarginContainer/VBoxTop/HBoxBars"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EnemyName" type="Label" parent="HUD/MarginContainer/VBoxTop/HBoxBars/EnemyBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 2
+
+[node name="EnemyHP" type="ProgressBar" parent="HUD/MarginContainer/VBoxTop/HBoxBars/EnemyBox"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_enemy_hp")
+value = 100.0
+fill_mode = 1
+show_percentage = false
+
+[node name="CenterContainer" type="CenterContainer" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="MessageLabel" type="Label" parent="HUD/CenterContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+
+[node name="MarginContainerBottom" type="MarginContainer" parent="HUD"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -50.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/margin_bottom = 14
+
+[node name="RestartHint" type="Label" parent="HUD/MarginContainerBottom"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.75, 0.7, 0.75)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1

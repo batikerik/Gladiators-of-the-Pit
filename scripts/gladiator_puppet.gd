@@ -22,6 +22,12 @@ extends Node2D
 		cloth_color = val
 		queue_redraw()
 
+## false when a separate KickLeg node animates the right leg (intro cutscene)
+@export var draw_right_leg: bool = true:
+	set(val):
+		draw_right_leg = val
+		queue_redraw()
+
 func _draw() -> void:
 	var skin: Color = Color(0.45, 0.55, 0.4) if is_zombie else skin_color
 	var cloth: Color = Color(0.3, 0.35, 0.25) if is_zombie else cloth_color
@@ -33,8 +39,9 @@ func _draw() -> void:
 	draw_rect(Rect2(-12, 18, 8, 30), skin)
 	draw_rect(Rect2(-13, 34, 10, 14), bronze if armor_tier >= 2 else Color(0.4, 0.25, 0.15))
 	# Right Leg
-	draw_rect(Rect2(4, 18, 8, 30), skin)
-	draw_rect(Rect2(3, 34, 10, 14), bronze if armor_tier >= 2 else Color(0.4, 0.25, 0.15))
+	if draw_right_leg:
+		draw_rect(Rect2(4, 18, 8, 30), skin)
+		draw_rect(Rect2(3, 34, 10, 14), bronze if armor_tier >= 2 else Color(0.4, 0.25, 0.15))
 	
 	# === 2. TORSO & TUNIC (Middle: y = -25 to 20) ===
 	# Waist / Loincloth

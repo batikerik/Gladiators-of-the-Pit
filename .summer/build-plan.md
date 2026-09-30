@@ -9,13 +9,13 @@ Source: .summer/GameSoul.md (2026-09-29)
 - [x] Sound/Visual punch: Hit flashes, impact sparks, blood/dust particles, camera shake
 
 ## Milestone 2: Intro & Combat Tutorial
-- [ ] Intro cutscene: Spartan-kick into the abyss ("This is Sparta!"), falling sequence, landing on a pile of corpses
-- [ ] First weapon pickup on the corpse pile
-- [ ] Tutorial Zombie: Harmless, immortal until player lands hits on required body zones:
+- [x] Intro cutscene: Spartan-kick into the abyss ("This is Sparta!"), falling sequence, landing on a pile of corpses
+- [x] First weapon pickup on the corpse pile
+- [x] Tutorial Zombie: Harmless, immortal until player lands hits on required body zones:
   - Task 1: Hit Head
   - Task 2: Hit Torso
   - Task 3: Hit Legs
-- [ ] Objective UI overlay displaying tutorial checklist
+- [x] Objective UI overlay displaying tutorial checklist
 
 ## Milestone 3: Inventory, Food & Weapon Variety
 - [ ] Inventory data system (weapons, food items)

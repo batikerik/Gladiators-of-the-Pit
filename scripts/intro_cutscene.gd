@@ -1,17 +1,26 @@
 class_name IntroCutscene
 extends Node2D
+## Opening: sentence on the execution ledge -> Spartan kick -> fall down the Pit.
+## Click / any key advances the dialogue, Esc skips straight to the tutorial.
 
 @export var next_scene_path: String = "res://scenes/tutorial_room.tscn"
+@export var fall_duration: float = 2.6       # Seconds of falling before the fade
+@export var kick_velocity: Vector2 = Vector2(560.0, -340.0)
+@export var fall_gravity: float = 980.0
+@export var max_fall_speed: float = 1400.0
 
-# State
-var _phase: int = 0
-var _timer: float = 0.0
+enum Phase { DIALOGUE, KICK, FALL, DONE }
+var _phase: Phase = Phase.DIALOGUE
 var _camera_shake: float = 0.0
+var _player_velocity: Vector2 = Vector2.ZERO
+var _fall_time: float = 0.0
 
 # Nodes
 @onready var camera: Camera2D = $Camera2D
 @onready var judge: Node2D = $Judge
+@onready var judge_leg: Node2D = $Judge/LegRight
 @onready var player: Node2D = $Player
+@onready var backdrop: IntroBackdrop = $Backdrop
 @onready var dialog_box: PanelContainer = $HUD/DialogContainer
 @onready var speaker_label: Label = $HUD/DialogContainer/Margin/VBox/SpeakerLabel
 @onready var text_label: Label = $HUD/DialogContainer/Margin/VBox/TextLabel
@@ -41,13 +50,11 @@ var _dialogues: Array = [
 	}
 ]
 var _current_dialogue_idx: int = 0
-var _kick_in_progress: bool = false
-var _player_velocity: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	fade_rect.modulate.a = 1.0
-	var tween := create_tween()
-	tween.tween_property(fade_rect, "modulate:a", 0.0, 1.2)
+	create_tween().tween_property(fade_rect, "modulate:a", 0.0, 1.2)
+	prompt_label.text = "[ЛКМ / любая клавиша — далее]   [Esc — пропустить]"
 	_show_dialogue(0)
 
 func _process(delta: float) -> void:
@@ -56,16 +63,38 @@ func _process(delta: float) -> void:
 		_camera_shake = maxf(0.0, _camera_shake - delta * 2.5)
 	else:
 		camera.offset = Vector2.ZERO
-	
-	if _kick_in_progress:
-		_player_velocity.y += 980.0 * delta
-		player.position += _player_velocity * delta
-		player.rotation -= 8.0 * delta # Tumble backwards
+
+	if _phase == Phase.FALL:
+		_process_fall(delta)
+
+func _process_fall(delta: float) -> void:
+	_fall_time += delta
+	_player_velocity.y = minf(_player_velocity.y + fall_gravity * delta, max_fall_speed)
+	# Air drag on x so the body drifts into the middle of the shaft instead of hitting the far wall
+	_player_velocity.x = move_toward(_player_velocity.x, 0.0, 480.0 * delta)
+	player.position += _player_velocity * delta
+	player.rotation -= 7.0 * delta   # tumble backwards
+
+	# Camera dives after the body once it drops below the ledge
+	var shaft_center: float = (backdrop.pit_left + backdrop.pit_right) * 0.5
+	var target := Vector2(lerpf(camera.position.x, shaft_center, 0.5), player.position.y - 80.0)
+	if player.position.y > camera.position.y - 100.0:
+		camera.position = camera.position.lerp(target, 5.0 * delta)
+
+	if _fall_time >= fall_duration and _phase == Phase.FALL:
+		_phase = Phase.DONE
+		var fade := create_tween()
+		fade.tween_property(fade_rect, "modulate:a", 1.0, 0.9)
+		fade.tween_callback(_go_to_tutorial)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _kick_in_progress:
+	if event is InputEventKey and event.is_pressed() and event.keycode == KEY_ESCAPE:
+		if _phase != Phase.DONE:
+			_phase = Phase.DONE
+			_go_to_tutorial()
 		return
-	
+	if _phase != Phase.DIALOGUE:
+		return
 	if (event is InputEventKey and event.is_pressed() and not event.is_echo()) or \
 	   (event is InputEventMouseButton and event.is_pressed() and event.button_index == MOUSE_BUTTON_LEFT):
 		_advance_cutscene()
@@ -74,11 +103,11 @@ func _advance_cutscene() -> void:
 	_current_dialogue_idx += 1
 	if _current_dialogue_idx < _dialogues.size():
 		_show_dialogue(_current_dialogue_idx)
-		if _current_dialogue_idx == 3:
-			# Spartan kick shout!
+		if _current_dialogue_idx == _dialogues.size() - 1:
+			# The shout: judge steps up, screen shakes
 			_camera_shake = 0.5
-			if prompt_label:
-				prompt_label.text = "[Кликните, чтобы совершить казнь]"
+			create_tween().tween_property(judge, "position:x", judge.position.x + 22.0, 0.25)
+			prompt_label.text = "[Кликните, чтобы свершилась казнь]"
 	else:
 		_execute_spartan_kick()
 
@@ -89,30 +118,25 @@ func _show_dialogue(idx: int) -> void:
 	text_label.text = d["text"]
 
 func _execute_spartan_kick() -> void:
-	_kick_in_progress = true
+	_phase = Phase.KICK
 	dialog_box.visible = false
 	prompt_label.visible = false
-	
-	# Animate Spartan Kick
-	# Judge raises leg and kicks!
-	var judge_leg: Node2D = judge.get_node_or_null("LegRight")
-	if judge_leg:
-		var leg_tween := create_tween()
-		leg_tween.tween_property(judge_leg, "rotation", deg_to_rad(-70), 0.15)
-		leg_tween.tween_property(judge_leg, "rotation", deg_to_rad(65), 0.08)
-	
-	# Player receives colossal kick impulse
+
+	# Wind the leg back, snap it forward; the hit lands at full extension
+	var leg := create_tween()
+	leg.tween_property(judge_leg, "rotation", deg_to_rad(35.0), 0.18)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	leg.tween_property(judge_leg, "rotation", deg_to_rad(-85.0), 0.07)
+	leg.tween_callback(_on_kick_impact)
+	leg.tween_interval(0.5)
+	leg.tween_property(judge_leg, "rotation", 0.0, 0.3)
+
+func _on_kick_impact() -> void:
 	_camera_shake = 1.0
-	_player_velocity = Vector2(550.0, -320.0) # Launch into the pit abyss
-	
-	# Spawn impact spark
+	_player_velocity = kick_velocity
+	_phase = Phase.FALL
 	VFXSpawner.spawn_hit_impact(get_tree(), player.global_position, Vector2(1, -0.3), "TORSO")
-	
-	# Fade to dark abyss and transition
-	var fade_tween := create_tween()
-	fade_tween.tween_interval(1.4)
-	fade_tween.tween_property(fade_rect, "modulate:a", 1.0, 1.0)
-	fade_tween.tween_callback(_go_to_tutorial)
+	VFXSpawner.apply_hitstop(get_tree(), 0.08)
 
 func _go_to_tutorial() -> void:
 	get_tree().change_scene_to_file(next_scene_path)

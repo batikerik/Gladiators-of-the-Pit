@@ -18,6 +18,10 @@ signal recovery_ended()
 @export var strike_duration: float = 0.18    # How long the strike arc lasts
 @export var whiff_recovery: float = 0.32     # Open/vulnerable frames after a miss
 @export var hit_recovery: float = 0.12       # Brief pause after landing a hit
+## A slash sweeps down from the wind-up, passing the head first. Contacts count
+## only once the blade is within this angle (radians) of its lane, so the aimed
+## zone is the one hit.
+@export var slash_active_angle: float = 0.2
 
 @export_group("Thrust (RMB)")
 @export var thrust_windup_time: float = 0.12 # Fixed short pull-back before the stab
@@ -277,7 +281,9 @@ func _tick_striking(delta: float) -> void:
 	else:
 		_shoulder().rotation = lerpf(_strike_start_angle, _strike_target_angle, ease_t)
 
-	_scan_contacts()
+	if strike_kind == StrikeKind.THRUST \
+			or absf(_shoulder().rotation - _strike_target_angle) <= slash_active_angle:
+		_scan_contacts()
 	if state != SwingState.STRIKING:
 		return   # a clash / parry already moved us out of the strike
 
@@ -328,15 +334,41 @@ func _angle_to_lane(world_pos: Vector2) -> float:
 ## Checked every strike frame (not only on area_entered), so a blade that is
 ## already touching the target when the strike starts still connects.
 func _scan_contacts() -> void:
+	# The blade can overlap several zones of one body at once (head + torso).
+	# A slash prefers the zone of its lane; otherwise the zone nearest the tip wins.
+	var tip: Vector2 = tip_marker.global_position if tip_marker else global_position
+	var aimed_zone: String = _lane_zone() if strike_kind == StrikeKind.SLASH else ""
+	var best_per_victim: Dictionary = {}   # victim -> hurtbox
 	for area in get_overlapping_areas():
-		if state != SwingState.STRIKING:
-			return
 		if area is Weapon and area != self:
 			var other := area as Weapon
 			if other.state == SwingState.STRIKING and not _clashed_this_strike:
 				_handle_clash(other)
+				return
 		elif area.is_in_group(&"hurtbox"):
-			_try_hit(area)
+			var victim: Variant = area.get("parent_combatant")
+			var current: Area2D = best_per_victim.get(victim)
+			if current == null:
+				best_per_victim[victim] = area
+				continue
+			var area_aimed: bool = str(area.get_meta("zone", "")) == aimed_zone
+			var current_aimed: bool = str(current.get_meta("zone", "")) == aimed_zone
+			if area_aimed != current_aimed:
+				if area_aimed:
+					best_per_victim[victim] = area
+			elif area.global_position.distance_to(tip) < current.global_position.distance_to(tip):
+				best_per_victim[victim] = area
+	for hurtbox in best_per_victim.values():
+		if state != SwingState.STRIKING:
+			return
+		_try_hit(hurtbox)
+
+func _lane_zone() -> String:
+	if is_equal_approx(_strike_target_angle, LANE_HIGH_ANGLE):
+		return "HEAD"
+	if is_equal_approx(_strike_target_angle, LANE_LOW_ANGLE):
+		return "LEGS"
+	return "TORSO"
 
 func _try_hit(hurtbox: Area2D) -> void:
 	var victim: Node2D = hurtbox.get("parent_combatant")

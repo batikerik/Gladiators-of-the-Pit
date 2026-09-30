@@ -15,6 +15,7 @@ func _initialize() -> void:
 func _run() -> void:
 	await _test_thrust_hits()
 	await _test_light_slash_hits()
+	await _test_slash_lanes_hit_aimed_zone()
 	await _test_block()
 	await _test_parry()
 	await _test_guard_break()
@@ -80,6 +81,21 @@ func _test_light_slash_hits() -> void:
 	await _slash(ab[0], 10, Weapon.LANE_MID_ANGLE)
 	await _frames(20)
 	_check(b.current_health < 100.0, "slash at 80px connects (hp %.1f)" % b.current_health)
+
+func _test_slash_lanes_hit_aimed_zone() -> void:
+	print("slash lanes")
+	# The sweep passes the head on its way down: a torso or legs slash must
+	# still register on the zone it was aimed at.
+	var lanes: Dictionary = {"HEAD": Weapon.LANE_HIGH_ANGLE, "TORSO": Weapon.LANE_MID_ANGLE, "LEGS": Weapon.LANE_LOW_ANGLE}
+	for zone in lanes:
+		for gap in [65.0, 85.0]:
+			var ab := await _setup(gap)
+			var b: Combatant = ab[1]
+			var hit_zones: Array = []
+			b.took_damage.connect(func(_a: float, z: String, _h: float, _m: float) -> void: hit_zones.append(z))
+			await _slash(ab[0], 12, lanes[zone])
+			await _frames(20)
+			_check(hit_zones == [zone], "%s slash at %dpx hits %s (got %s)" % [zone, gap, zone, hit_zones])
 
 func _test_block() -> void:
 	print("block")

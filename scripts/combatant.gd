@@ -17,6 +17,13 @@ signal defeated
 @export var is_zombie: bool = false
 @export var armor_tier: int = 1
 
+@export_group("Scripted states")
+@export var armed: bool = true           # false = no weapon until equip_weapon()
+@export var input_enabled: bool = true   # player only: cutscenes / landing lock input
+@export var ai_enabled: bool = true      # AI only: false = stands still
+@export var ai_passive: bool = false     # AI only: shambles toward the target, never attacks
+@export var immortal: bool = false       # takes hits (and reacts) but loses no health
+
 @export_group("Combo")
 @export var combo_window: float = 1.5        # Seconds between hits to keep the chain
 @export var combo_step_bonus: float = 0.15   # +15% damage per chained hit
@@ -81,9 +88,35 @@ func _ready() -> void:
 		weapon.hit_connected.connect(_on_weapon_hit_connected)
 		weapon.clash_occurred.connect(_on_clash)
 		weapon.add_to_group(&"weapon_hitbox")
+		_set_weapon_active(armed)
 
 	if is_player:
 		_create_charge_bar()
+
+## Hand the combatant their weapon (tutorial pickup).
+func equip_weapon() -> void:
+	armed = true
+	_set_weapon_active(true)
+	shoulder_pivot.rotation = Weapon.LANE_MID_ANGLE
+	_squash_scale = Vector2(0.85, 1.2)
+
+func _set_weapon_active(active: bool) -> void:
+	weapon.visible = active
+	weapon.set_deferred("monitoring", active)
+	weapon.set_deferred("monitorable", active)
+	if not active:
+		weapon.interrupt()
+
+## Short line of speech above the head.
+func say(text: String, color: Color = Color(0.9, 0.88, 0.8)) -> void:
+	_spawn_popup(text, color, 16, Vector2(-30, -100))
+
+## Heavy landing: squash, dust, camera shake.
+func land_heavy(strength: float = 1.0) -> void:
+	_squash_scale = Vector2(1.4, 0.6)
+	_trigger_camera_shake(0.8 * strength)
+	VFXSpawner.spawn_sparks(get_tree(), global_position + Vector2(0, 48), Vector2.UP,
+		Color(0.55, 0.47, 0.38), 24)
 
 # ── Physics ───────────────────────────────────────────────────────────────────
 func _physics_process(delta: float) -> void:
@@ -138,7 +171,7 @@ func _physics_process(delta: float) -> void:
 
 # ── Player input ──────────────────────────────────────────────────────────────
 func _process_player_input(_delta: float) -> void:
-	if is_tripped or _stagger_timer > 0.0:
+	if not input_enabled or is_tripped or _stagger_timer > 0.0:
 		return
 
 	# Facing: follow mouse
@@ -165,7 +198,7 @@ func _process(_delta: float) -> void:
 	_update_charge_bar()
 
 func _process_player_weapon(delta: float) -> void:
-	if not shoulder_pivot or not weapon:
+	if not shoulder_pivot or not weapon or not armed:
 		return
 
 	var rmb := Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
@@ -177,7 +210,7 @@ func _process_player_weapon(delta: float) -> void:
 	var guard := Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_SHIFT) \
 		or Input.is_action_pressed("ui_down")
 	# Still tick the weapon (recovery must run out), but accept no new commands
-	if is_tripped or _stagger_timer > 0.0:
+	if not input_enabled or is_tripped or _stagger_timer > 0.0:
 		hold = false
 		thrust_pressed = false
 		guard = false
@@ -186,7 +219,7 @@ func _process_player_weapon(delta: float) -> void:
 
 # ── AI ────────────────────────────────────────────────────────────────────────
 func _process_ai(delta: float) -> void:
-	if not weapon:
+	if not weapon or not ai_enabled:
 		return
 
 	var target: CharacterBody2D = _find_opponent()
@@ -211,6 +244,13 @@ func _process_ai(delta: float) -> void:
 	if _stagger_timer > 0.0 or is_tripped:
 		if _ai_state == AIState.GUARDING or _ai_state == AIState.CHARGING:
 			_ai_state = AIState.FOOTSIE
+		return
+
+	if ai_passive or not armed:
+		# Shamble toward the target and just stand there — no attacks, no guard
+		if is_on_floor() and hop_cooldown <= 0.0 and dist > 90.0:
+			_perform_hop(toward)
+			hop_cooldown = randf_range(0.5, 0.9)
 		return
 
 	# React to an incoming strike: snap-guard (likely parry), dodge, or eat it
@@ -350,7 +390,7 @@ func _perform_hop(dir_x: float) -> void:
 # ── Defense ───────────────────────────────────────────────────────────────────
 ## Called by the attacker's weapon before damage is applied.
 func try_defend(attacker: Node2D, heavy: bool) -> int:
-	if not weapon or not weapon.is_guarding() or not attacker:
+	if not armed or not weapon or not weapon.is_guarding() or not attacker:
 		return Weapon.Defense.NONE
 	# A guard only covers the side we are facing
 	var from_side: int = 1 if attacker.global_position.x >= global_position.x else -1
@@ -389,7 +429,8 @@ func receive_hit(amount: float, zone_name: String, hit_dir: Vector2,
 	if not is_alive:
 		return
 
-	current_health = maxf(0.0, current_health - amount)
+	if not immortal:
+		current_health = maxf(0.0, current_health - amount)
 	var blocked: bool = "BLOCK" in tags
 
 	if blocked:
@@ -423,7 +464,12 @@ func receive_hit(amount: float, zone_name: String, hit_dir: Vector2,
 		VFXSpawner.spawn_hit_impact(get_tree(), global_position, hit_dir, zone_name)
 
 	_flash_white()
-	_spawn_damage_indicator(amount, zone_name, tags)
+	if immortal:
+		# No damage to show: name the zone that was hit instead
+		var zone_ru: Dictionary = {"HEAD": "ГОЛОВА!", "TORSO": "ТОРС!", "LEGS": "НОГИ!"}
+		_spawn_popup(zone_ru.get(zone_name, zone_name), Color(0.75, 0.9, 0.6), 18)
+	else:
+		_spawn_damage_indicator(amount, zone_name, tags)
 
 	took_damage.emit(amount, zone_name, current_health, max_health)
 

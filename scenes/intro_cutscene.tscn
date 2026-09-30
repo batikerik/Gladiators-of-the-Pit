@@ -1,0 +1,105 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/intro_cutscene.gd" id="1_intro"]
+[ext_resource type="Script" path="res://scripts/intro_backdrop.gd" id="2_backdrop"]
+[ext_resource type="Script" path="res://scripts/gladiator_puppet.gd" id="3_puppet"]
+[ext_resource type="Script" path="res://scripts/kick_leg.gd" id="4_leg"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dialog"]
+bg_color = Color(0.06, 0.05, 0.08, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.55, 0.42, 0.2, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="IntroCutscene" type="Node2D"]
+script = ExtResource("1_intro")
+
+[node name="Backdrop" type="Node2D" parent="."]
+script = ExtResource("2_backdrop")
+
+[node name="Judge" type="Node2D" parent="."]
+position = Vector2(560, 452)
+
+[node name="Puppet" type="Node2D" parent="Judge"]
+script = ExtResource("3_puppet")
+armor_tier = 2
+cloth_color = Color(0.45, 0.1, 0.35, 1)
+draw_right_leg = false
+
+[node name="LegRight" type="Node2D" parent="Judge"]
+position = Vector2(8, 18)
+script = ExtResource("4_leg")
+
+[node name="Player" type="Node2D" parent="."]
+position = Vector2(640, 452)
+scale = Vector2(-1, 1)
+
+[node name="Puppet" type="Node2D" parent="Player"]
+script = ExtResource("3_puppet")
+armor_tier = 0
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(560, 380)
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="DialogContainer" type="PanelContainer" parent="HUD"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 120.0
+offset_top = -190.0
+offset_right = -120.0
+offset_bottom = -60.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_dialog")
+
+[node name="Margin" type="MarginContainer" parent="HUD/DialogContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 14
+
+[node name="VBox" type="VBoxContainer" parent="HUD/DialogContainer/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SpeakerLabel" type="Label" parent="HUD/DialogContainer/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+
+[node name="TextLabel" type="Label" parent="HUD/DialogContainer/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+autowrap_mode = 3
+
+[node name="PromptLabel" type="Label" parent="HUD"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -44.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.8, 0.75, 0.7, 0.8)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+
+[node name="FadeRect" type="ColorRect" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)

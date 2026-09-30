@@ -9,6 +9,9 @@ extends CanvasLayer
 @onready var tutorial_panel: PanelContainer = get_node_or_null("TutorialPanel")
 @onready var restart_hint: Label = $MarginContainerBottom/RestartHint
 
+## false = a scene director (e.g. the tutorial) owns the end-of-fight flow
+@export var show_end_messages: bool = true
+
 var player_combatant: CharacterBody2D = null
 var enemy_combatant: CharacterBody2D = null
 
@@ -51,12 +54,12 @@ func _on_enemy_took_damage(_amount: float, _zone: String, current_hp: float, _ma
 		tween.tween_property(enemy_bar, "value", current_hp, 0.15)
 
 func _on_player_defeated() -> void:
-	if message_label:
+	if message_label and show_end_messages:
 		message_label.text = "YOU DIED IN THE PIT\nPress R to Try Again"
 		message_label.modulate = Color(1.0, 0.2, 0.2)
 
 func _on_enemy_defeated() -> void:
-	if message_label:
+	if message_label and show_end_messages:
 		message_label.text = "VICTORY!\nEnemy Defeated\nPress R to Restart"
 		message_label.modulate = Color(0.3, 1.0, 0.4)
 
