@@ -3,19 +3,20 @@ extends Node
 ## crossfades between tracks, so music never cuts off on a scene change.
 ##   tavern — main menu, the descent map, intro, campfire and cache rooms
 ##   fight  — every fight with the AI (tutorial, combat rooms, boss, arena)
+##   death  — the defeat screen (RunEndScreen picks it; victory is silent)
 ## Keeps playing while the game is paused. Volume: Settings.music_volume.
 
 const TRACKS: Dictionary = {
 	&"tavern": preload("res://audio/music/cozy_tavern_hearth.mp3"),
 	&"fight": preload("res://audio/music/skirmish_on_the_road.mp3"),
+	&"death": preload("res://audio/music/catacomb_steps.mp3"),
 }
-## Scene root name -> track (&"" = fade to silence). Unlisted scenes keep
-## whatever is playing.
+## Scene root name -> track. Unlisted scenes keep whatever is playing (the
+## run end screen chooses its own track).
 const SCENE_TRACKS: Dictionary = {
 	"MainMenu": &"tavern", "IntroCutscene": &"tavern", "CatacombMap": &"tavern",
 	"SafeRoom": &"tavern", "LootRoom": &"tavern",
 	"TutorialRoom": &"fight", "CombatRoom": &"fight", "Arena": &"fight",
-	"RunEndScreen": &"",
 }
 const FADE_TIME: float = 1.2
 

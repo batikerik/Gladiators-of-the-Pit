@@ -15,6 +15,7 @@ func _run() -> void:
 	# Tests assert English texts and must not touch the player's settings
 	Settings.settings_path = "user://test_settings.cfg"
 	Settings.language = "en"
+	Settings.nickname = ""   # the player's real nickname must not leak into name checks
 	Settings.apply()
 	# Never touch the real legacy save: runs and corpses go to a scratch file
 	RunState.legacy_path = "user://test_legacy.json"

@@ -183,6 +183,13 @@ func _test_pause_menu() -> void:
 	get_tree().change_scene_to_file(RunState.MAP_SCENE)
 	await _wait_scene("CatacombMap")
 	_check(Music.current_track == &"tavern", "the map keeps the tavern music")
+	RunState.last_result = {"victory": false, "runner": 1, "depth": 2, "room_type": "combat", "stats": {}, "corpse_items": []}
+	get_tree().change_scene_to_file(RunState.RUN_END_SCENE)
+	await _wait_scene("RunEndScreen")
+	await _frames(3)
+	_check(Music.current_track == &"death", "the defeat screen plays Catacomb Steps")
+	get_tree().change_scene_to_file(RunState.MAP_SCENE)
+	await _wait_scene("CatacombMap")
 	_press_esc()
 	await _frames(3)
 	_check(PauseMenu.is_open() and get_tree().paused, "Esc on the map pauses the game")

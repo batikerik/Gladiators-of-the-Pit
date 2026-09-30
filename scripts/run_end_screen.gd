@@ -19,6 +19,8 @@ func _ready() -> void:
 		result = {"victory": false, "runner": 1, "depth": 3, "room_type": "combat",
 			"stats": {"kills": 2, "rooms": 3, "max_depth": 3}, "corpse_items": ["rusty_gladius", "stale_bread"]}
 	_build_text()
+	# Defeat gets its own sombre theme, freedom is met in silence
+	Music.play(&"" if result.get("victory", false) else &"death")
 	# Ignore keys still held from the fight for a moment
 	get_tree().create_timer(1.0).timeout.connect(func() -> void: _ready_for_input = true)
 
