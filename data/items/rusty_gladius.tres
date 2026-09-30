@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+id = &"rusty_gladius"
+display_name = "Ржавый гладиус"
+description = "Короткий меч гладиатора. Ничего особенного — зато никаких слабостей."
+style = &"gladius"
+base_damage = 18.0
+reach = 60.0
+weight = 1.0

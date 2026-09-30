@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+id = &"rusty_spear"
+display_name = "Ржавое копьё"
+description = "Держит врага на расстоянии. Укол — главное оружие, рубить им неудобно."
+style = &"spear"
+base_damage = 15.0
+reach = 96.0
+weight = 1.1
+full_charge_damage_mult = 1.8
+thrust_damage_mult = 1.7
+knockback_mult = 0.9
+heavy_threshold = 0.9
+thrust_reach = 34.0

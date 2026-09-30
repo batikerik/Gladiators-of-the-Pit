@@ -1,15 +1,15 @@
-extends SceneTree
+extends Node
 ## Headless check of the combat moves: thrust, slash, block, parry, guard break,
 ## counter-hit, combo and the NaN regression. Both combatants are frozen
 ## (no AI, no player input) and commanded directly through the Weapon API.
 ##
-## Run: Summer.exe --headless --path . --script res://tests/combat_mechanics_test.gd
+## Run: Summer.exe --headless --path . res://tests/combat_mechanics_test.tscn
 
 const MAIN := preload("res://main.tscn")
 
 var _failures: int = 0
 
-func _initialize() -> void:
+func _ready() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
@@ -23,16 +23,17 @@ func _run() -> void:
 	await _test_combo()
 	await _test_no_nan_after_strikes()
 	print("COMBAT TEST: %s (%d failures)" % ["PASS" if _failures == 0 else "FAIL", _failures])
-	quit(1 if _failures > 0 else 0)
+	get_tree().quit(1 if _failures > 0 else 0)
 
 # ── Setup helpers ────────────────────────────────────────────────────────────
 ## Fresh arena; A (player) faces right, B (opponent) stands `gap` px to the right facing left.
 func _setup(gap: float) -> Array:
-	if current_scene:
-		current_scene.free()
+	# Free the previous arena (never the runner: it starts as current_scene)
+	if get_tree().current_scene and get_tree().current_scene != self:
+		get_tree().current_scene.free()
 	var arena := MAIN.instantiate()
-	root.add_child(arena)
-	current_scene = arena
+	get_tree().root.add_child(arena)
+	get_tree().current_scene = arena
 	var a: Combatant = arena.get_node("Player")
 	var b: Combatant = arena.get_node("Opponent")
 	for c in [a, b]:
@@ -49,7 +50,7 @@ func _setup(gap: float) -> Array:
 
 func _frames(n: int) -> void:
 	for i in n:
-		await physics_frame
+		await get_tree().physics_frame
 
 func _check(cond: bool, what: String) -> void:
 	if cond:

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/weapon_data.gd" id="1_weapon"]
+
+[resource]
+script = ExtResource("1_weapon")
+id = &"bone_club"
+display_name = "Костяная дубина"
+description = "Бедренная кость великана с шипами. Медленная, но каждый удар оглушает, а блок ломает с полузамаха."
+style = &"club"
+base_damage = 23.0
+reach = 50.0
+weight = 1.6
+full_charge_damage_mult = 2.6
+thrust_damage_mult = 0.6
+knockback_mult = 1.6
+heavy_threshold = 0.6
+stagger_on_hit = 0.25
+thrust_reach = 14.0

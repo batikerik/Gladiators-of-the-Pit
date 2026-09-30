@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FoodData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/food_data.gd" id="1_food"]
+
+[resource]
+script = ExtResource("1_food")
+id = &"cave_mushroom"
+display_name = "Пещерный гриб"
+description = "Светится в темноте. Проглатывается быстро — можно перекусить прямо в бою."
+max_stack = 5
+style = &"mushroom"
+heal_amount = 10.0
+satiety = 1
+eat_time = 0.5

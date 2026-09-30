@@ -5,8 +5,8 @@
 [ext_resource type="Script" path="res://scripts/tutorial_decor.gd" id="3_decor"]
 [ext_resource type="Script" path="res://scripts/camera_follow.gd" id="4_camera"]
 [ext_resource type="PackedScene" path="res://scenes/combatant.tscn" id="5_combatant"]
-[ext_resource type="Script" path="res://scripts/weapon_pickup.gd" id="6_pickup"]
-[ext_resource type="Script" path="res://scripts/weapon_renderer.gd" id="7_renderer"]
+[ext_resource type="Script" path="res://scripts/items/item_pickup.gd" id="6_pickup"]
+[ext_resource type="Resource" path="res://data/items/rusty_gladius.tres" id="7_gladius"]
 [ext_resource type="Script" path="res://scripts/combat_hud.gd" id="8_hud"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
@@ -69,12 +69,9 @@ script = ExtResource("4_camera")
 
 [node name="WeaponPickup" type="Node2D" parent="."]
 position = Vector2(338, 520)
-rotation = 1.8
 script = ExtResource("6_pickup")
-
-[node name="WeaponRenderer" type="Node2D" parent="WeaponPickup"]
-position = Vector2(-40, 0)
-script = ExtResource("7_renderer")
+item = ExtResource("7_gladius")
+stuck = true
 
 [node name="Player" parent="." instance=ExtResource("5_combatant")]
 position = Vector2(265, -380)

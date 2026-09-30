@@ -1,23 +1,23 @@
-extends SceneTree
+extends Node
 ## Headless run of the whole tutorial: fall onto the pile -> pick up the sword ->
 ## hit the zombie in head, torso, legs -> it turns mortal -> kill it -> the
 ## scene moves on to the arena. The player's weapon is commanded through the
 ## Weapon API (no mouse in headless), everything else runs as in the game.
 ##
-## Run: Summer.exe --headless --path . --script res://tests/tutorial_flow_test.gd
+## Run: Summer.exe --headless --path . res://tests/tutorial_flow_test.tscn
 
 const TUTORIAL := preload("res://scenes/tutorial_room.tscn")
 const ZONE_AIM: Dictionary = {"HEAD": Vector2(0, -36), "TORSO": Vector2(0, -2), "LEGS": Vector2(0, 30)}
 
 var _failures: int = 0
 
-func _initialize() -> void:
+func _ready() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
 	var room: TutorialDirector = TUTORIAL.instantiate()
-	root.add_child(room)
-	current_scene = room
+	get_tree().root.add_child(room)
+	get_tree().current_scene = room
 	var player: Combatant = room.player
 	var zombie: Combatant = room.zombie
 
@@ -75,11 +75,11 @@ func _run() -> void:
 	# Compare by id: the lambda must not capture the room, it gets freed on scene change
 	var room_id: int = room.get_instance_id()
 	await _wait_until(func() -> bool:
-		return current_scene != null and current_scene.get_instance_id() != room_id, 600)
-	_check(current_scene != null and current_scene.name == "Arena", "tutorial hands over to the arena")
+		return get_tree().current_scene != null and get_tree().current_scene.get_instance_id() != room_id, 600)
+	_check(get_tree().current_scene != null and get_tree().current_scene.name == "Arena", "tutorial hands over to the arena")
 
 	print("TUTORIAL TEST: %s (%d failures)" % ["PASS" if _failures == 0 else "FAIL", _failures])
-	quit(1 if _failures > 0 else 0)
+	get_tree().quit(1 if _failures > 0 else 0)
 
 func _wait_in_reach(player: Combatant, zombie: Combatant, near: float = 70.0, far: float = 115.0) -> void:
 	await _wait_until(func() -> bool:
@@ -92,11 +92,11 @@ func _wait_until(cond: Callable, max_frames: int) -> void:
 	for i in max_frames:
 		if cond.call():
 			return
-		await physics_frame
+		await get_tree().physics_frame
 
 func _frames(n: int) -> void:
 	for i in n:
-		await physics_frame
+		await get_tree().physics_frame
 
 func _check(cond: bool, what: String) -> void:
 	print("  ok   " if cond else "  FAIL ", what)

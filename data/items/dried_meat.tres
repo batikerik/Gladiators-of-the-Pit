@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FoodData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/food_data.gd" id="1_food"]
+
+[resource]
+script = ExtResource("1_food")
+id = &"dried_meat"
+display_name = "Вяленое мясо"
+description = "Лучше не спрашивать, чьё. Сытно, но жевать долго."
+max_stack = 5
+style = &"meat"
+heal_amount = 30.0
+satiety = 2
+eat_time = 1.2

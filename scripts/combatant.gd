@@ -2,6 +2,7 @@ class_name Combatant
 extends CharacterBody2D
 
 signal took_damage(amount: float, zone: String, current_hp: float, max_hp: float)
+signal health_changed(current_hp: float, max_hp: float)
 signal landed_hit(target: Node2D, zone: String, damage: float, pos: Vector2, normal: Vector2)
 signal defeated
 
@@ -16,6 +17,12 @@ signal defeated
 @export var ai_aggression: float = 1.0
 @export var is_zombie: bool = false
 @export var armor_tier: int = 1
+
+@export_group("Equipment")
+## Weapon for AI fighters, and the player's fallback when the run inventory has none
+@export var weapon_data: WeaponData = preload("res://data/items/rusty_gladius.tres")
+## Dropped on death (AI only), in addition to the weapon
+@export var loot: Array[ItemData] = []
 
 @export_group("Scripted states")
 @export var armed: bool = true           # false = no weapon until equip_weapon()
@@ -73,6 +80,12 @@ var _charge_bar_bg: ColorRect = null
 var _prev_key_a: bool = false
 var _prev_key_d: bool = false
 var _prev_rmb: bool = false
+var _prev_key_q: bool = false
+var _prev_num: Array[bool] = [false, false, false]
+
+# Eating (a short channel; a hit interrupts it and the food is kept)
+var _eating_food: FoodData = null
+var _eat_timer: float = 0.0
 
 func _ready() -> void:
 	current_health = max_health
@@ -88,17 +101,99 @@ func _ready() -> void:
 		weapon.hit_connected.connect(_on_weapon_hit_connected)
 		weapon.clash_occurred.connect(_on_clash)
 		weapon.add_to_group(&"weapon_hitbox")
-		_set_weapon_active(armed)
 
 	if is_player:
+		_sync_with_run_state()
 		_create_charge_bar()
+	elif weapon and weapon_data:
+		weapon.apply_data(weapon_data)
+	if weapon:
+		_set_weapon_active(armed)
 
-## Hand the combatant their weapon (tutorial pickup).
-func equip_weapon() -> void:
+## The player's health and weapon live in RunState so they survive scene changes.
+func _sync_with_run_state() -> void:
+	if not RunState.run_active:
+		# Scene launched straight from the editor: start a run on the spot
+		RunState.new_run()
+	max_health = RunState.player_max_health
+	if RunState.player_health <= 0.0:
+		RunState.player_health = max_health   # restarted after a death
+	current_health = RunState.player_health
+
+	var inv := RunState.inventory
+	if inv.equipped == null and armed and weapon_data:
+		inv.add(weapon_data)   # auto-equips the first weapon
+	if inv.equipped:
+		armed = true
+		weapon.apply_data(inv.equipped)
+	inv.equipped_changed.connect(_on_equipped_changed)
+
+func _exit_tree() -> void:
+	if is_player and RunState.inventory.equipped_changed.is_connected(_on_equipped_changed):
+		RunState.inventory.equipped_changed.disconnect(_on_equipped_changed)
+
+func _on_equipped_changed(data: WeaponData) -> void:
+	if data == null:
+		armed = false
+		_set_weapon_active(false)
+	else:
+		equip_weapon(data)
+
+## Put a weapon in the combatant's hand (tutorial pickup, weapon switch).
+## Without an argument the current weapon data is kept.
+func equip_weapon(data: WeaponData = null) -> void:
+	if data:
+		weapon_data = data
+		weapon.apply_data(data)
 	armed = true
 	_set_weapon_active(true)
 	shoulder_pivot.rotation = Weapon.LANE_MID_ANGLE
 	_squash_scale = Vector2(0.85, 1.2)
+
+func heal(amount: float) -> void:
+	if not is_alive:
+		return
+	current_health = minf(max_health, current_health + amount)
+	_emit_health()
+
+func _emit_health() -> void:
+	if is_player:
+		RunState.player_health = current_health
+	health_changed.emit(current_health, max_health)
+
+# ── Eating ────────────────────────────────────────────────────────────────────
+func is_eating() -> bool:
+	return _eating_food != null
+
+## Start chewing: no attacks or hops until done. Returns false if busy.
+func start_eating(food: FoodData) -> bool:
+	if is_eating() or not is_alive or is_tripped or _stagger_timer > 0.0:
+		return false
+	if weapon and not weapon.is_idle() and not weapon.is_guarding():
+		return false
+	if weapon and weapon.is_guarding():
+		weapon.lower_guard()
+	_eating_food = food
+	_eat_timer = food.eat_time
+	say("*жуёт %s*" % food.display_name.to_lower())
+	return true
+
+func _tick_eating(delta: float) -> void:
+	_eat_timer -= delta
+	# Chewing bob
+	_squash_scale = Vector2(1.0 + 0.04 * sin(_eat_timer * 30.0), 1.0)
+	if _eat_timer <= 0.0:
+		var food := _eating_food
+		_eating_food = null
+		if is_player and not RunState.inventory.remove(food):
+			return   # the food vanished from the inventory meanwhile
+		heal(food.heal_amount)
+		_spawn_popup("+%d" % int(food.heal_amount), Color(0.4, 1.0, 0.45), 18)
+
+func _interrupt_eating() -> void:
+	if is_eating():
+		_eating_food = null
+		say("Не дали доесть!", Color(1.0, 0.6, 0.4))
 
 func _set_weapon_active(active: bool) -> void:
 	weapon.visible = active
@@ -146,6 +241,9 @@ func _physics_process(delta: float) -> void:
 	if _combo_timer <= 0.0:
 		_combo_count = 0
 
+	if is_eating():
+		_tick_eating(delta)
+
 	if is_player:
 		_process_player_input(delta)
 		_process_player_weapon(delta)
@@ -178,8 +276,24 @@ func _process_player_input(_delta: float) -> void:
 	var mouse_pos: Vector2 = get_global_mouse_position()
 	facing_direction = 1 if mouse_pos.x >= global_position.x else -1
 
-	# Guarding plants your feet
-	if weapon and weapon.is_guarding():
+	# [Q] eat the first food, [1]-[3] switch weapon (only with the weapon at rest)
+	var q := Input.is_key_pressed(KEY_Q)
+	if q and not _prev_key_q:
+		var foods := RunState.inventory.foods()
+		if not foods.is_empty():
+			start_eating(foods[0])
+		else:
+			say("Еды нет...")
+	_prev_key_q = q
+	var slot_keys: Array[Key] = [KEY_1, KEY_2, KEY_3]
+	for i in 3:
+		var pressed := Input.is_key_pressed(slot_keys[i])
+		if pressed and not _prev_num[i]:
+			_try_switch_weapon(i)
+		_prev_num[i] = pressed
+
+	# Chewing and guarding both plant your feet
+	if is_eating() or (weapon and weapon.is_guarding()):
 		return
 
 	# Hop on single press — A/D or arrow keys
@@ -197,6 +311,17 @@ func _process(_delta: float) -> void:
 	_prev_key_d = Input.is_key_pressed(KEY_D)
 	_update_charge_bar()
 
+func _try_switch_weapon(slot: int) -> void:
+	var inv := RunState.inventory
+	if slot >= inv.weapons.size() or not armed:
+		return
+	if weapon and not weapon.is_idle():
+		return   # no swapping mid-swing or behind a raised guard
+	var target: WeaponData = inv.weapons[slot]
+	if target != inv.equipped:
+		inv.equip(target)   # -> _on_equipped_changed
+		say(target.display_name)
+
 func _process_player_weapon(delta: float) -> void:
 	if not shoulder_pivot or not weapon or not armed:
 		return
@@ -210,7 +335,7 @@ func _process_player_weapon(delta: float) -> void:
 	var guard := Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_SHIFT) \
 		or Input.is_action_pressed("ui_down")
 	# Still tick the weapon (recovery must run out), but accept no new commands
-	if not input_enabled or is_tripped or _stagger_timer > 0.0:
+	if not input_enabled or is_tripped or _stagger_timer > 0.0 or is_eating():
 		hold = false
 		thrust_pressed = false
 		guard = false
@@ -219,7 +344,7 @@ func _process_player_weapon(delta: float) -> void:
 
 # ── AI ────────────────────────────────────────────────────────────────────────
 func _process_ai(delta: float) -> void:
-	if not weapon or not ai_enabled:
+	if not weapon or not ai_enabled or is_eating():
 		return
 
 	var target: CharacterBody2D = _find_opponent()
@@ -254,7 +379,7 @@ func _process_ai(delta: float) -> void:
 		return
 
 	# React to an incoming strike: snap-guard (likely parry), dodge, or eat it
-	if tw and tw.state == Weapon.SwingState.STRIKING and dist < 140.0 \
+	if tw and tw.state == Weapon.SwingState.STRIKING and dist < tw.slash_range() + 15.0 \
 			and _ai_dodge_cooldown <= 0.0 and _ai_state != AIState.GUARDING:
 		_ai_dodge_cooldown = 0.7
 		var roll := randf()
@@ -270,7 +395,7 @@ func _process_ai(delta: float) -> void:
 			_ai_timer = 0.25
 
 	# Anticipate a charging opponent by raising the guard early
-	if tw and tw.state == Weapon.SwingState.CHARGING and dist < 170.0 and w.is_idle() \
+	if tw and tw.state == Weapon.SwingState.CHARGING and dist < tw.thrust_range() + 25.0 and w.is_idle() \
 			and _ai_guard_cooldown <= 0.0 \
 			and (_ai_state == AIState.APPROACH or _ai_state == AIState.FOOTSIE):
 		_ai_guard_cooldown = 1.2
@@ -281,7 +406,7 @@ func _process_ai(delta: float) -> void:
 	# Punish a tripped or staggered opponent with a fast thrust to the head
 	var target_open: bool = bool(target.get("is_tripped")) or target.is_staggered()
 	if target_open and _ai_state == AIState.FOOTSIE and _ai_attack_cooldown <= 0.0 \
-			and w.is_idle() and dist <= 145.0:
+			and w.is_idle() and dist <= w.thrust_range():
 		w.ai_start_thrust(target.global_position + Vector2(0, -36))
 		_ai_state = AIState.RETREAT
 		_ai_timer = 0.45
@@ -290,7 +415,7 @@ func _process_ai(delta: float) -> void:
 	match _ai_state:
 		AIState.APPROACH:
 			if is_on_floor() and hop_cooldown <= 0.0:
-				if dist > 120.0:
+				if dist > w.slash_range() - 5.0:
 					_perform_hop(toward)
 				else:
 					_ai_state = AIState.FOOTSIE
@@ -302,9 +427,9 @@ func _process_ai(delta: float) -> void:
 		AIState.FOOTSIE:
 			# Space management — stay at ideal range
 			if is_on_floor() and hop_cooldown <= 0.0:
-				if dist < 65.0:
+				if dist < maxf(45.0, w.slash_range() - 60.0):
 					_perform_hop(-toward)
-				elif dist > 130.0:
+				elif dist > w.slash_range() + 5.0:
 					_perform_hop(toward)
 
 			# Feinting guard — move weapon around to confuse
@@ -334,7 +459,7 @@ func _process_ai(delta: float) -> void:
 
 		AIState.GUARDING:
 			var opening: bool = tw != null and tw.is_in_recovery()
-			if opening and dist <= 145.0:
+			if opening and dist <= w.thrust_range():
 				# Riposte: the attacker is stuck in recovery
 				w.ai_guard(false)
 				w.ai_start_thrust(target.global_position + Vector2(0, -4))
@@ -349,7 +474,7 @@ func _process_ai(delta: float) -> void:
 func _ai_choose_attack(target: Node2D, tw: Weapon, dist: float, toward: float) -> void:
 	var w: Weapon = weapon
 	# Thrust from mid range: fast, long reach, aimed at a random zone
-	if dist >= 80.0 and dist <= 145.0 and randf() < 0.35:
+	if dist >= w.slash_range() - 45.0 and dist <= w.thrust_range() and randf() < 0.35:
 		var zone_offsets: Array[Vector2] = [Vector2(0, -36), Vector2(0, -4), Vector2(0, 30)]
 		w.ai_start_thrust(target.global_position + zone_offsets.pick_random())
 		_ai_state = AIState.RETREAT
@@ -357,7 +482,7 @@ func _ai_choose_attack(target: Node2D, tw: Weapon, dist: float, toward: float) -
 		_ai_attack_cooldown = randf_range(0.5, 0.9)
 		return
 
-	if dist > 125.0:
+	if dist > w.slash_range():
 		return
 
 	var roll := randf()
@@ -371,17 +496,18 @@ func _ai_choose_attack(target: Node2D, tw: Weapon, dist: float, toward: float) -
 	_ai_state = AIState.CHARGING
 	# A raised guard invites a fully charged, guard-breaking slash
 	if tw and tw.is_guarding():
-		_ai_timer = randf_range(0.8, 0.95)
+		_ai_timer = w.max_charge_time * w.heavy_threshold + randf_range(0.03, 0.12)
 	else:
-		_ai_timer = randf_range(0.25, 0.55)
+		_ai_timer = randf_range(0.25, 0.55) * w.max_charge_time / 0.9
 	w.ai_start_charge()
-	if is_on_floor() and dist > 80.0:
+	if is_on_floor() and dist > w.slash_range() - 45.0:
 		_perform_hop(toward)
 
 # ── Hop ───────────────────────────────────────────────────────────────────────
 func _perform_hop(dir_x: float) -> void:
 	velocity.y = -hop_force_y
-	velocity.x = dir_x * hop_force_x
+	var weight_mult: float = weapon.data.move_mult() if armed and weapon and weapon.data else 1.0
+	velocity.x = dir_x * hop_force_x * weight_mult
 	hop_cooldown = 0.28
 
 	_squash_scale = Vector2(0.85, 1.22)
@@ -421,7 +547,8 @@ func is_staggered() -> bool:
 	return _stagger_timer > 0.0
 
 func get_combo_multiplier() -> float:
-	return 1.0 + combo_step_bonus * mini(_combo_count, combo_max_steps)
+	var step: float = weapon.data.combo_step_bonus if weapon and weapon.data else combo_step_bonus
+	return 1.0 + step * mini(_combo_count, combo_max_steps)
 
 # ── Hit reception ─────────────────────────────────────────────────────────────
 func receive_hit(amount: float, zone_name: String, hit_dir: Vector2,
@@ -431,6 +558,7 @@ func receive_hit(amount: float, zone_name: String, hit_dir: Vector2,
 
 	if not immortal:
 		current_health = maxf(0.0, current_health - amount)
+	_interrupt_eating()
 	var blocked: bool = "BLOCK" in tags
 
 	if blocked:
@@ -472,6 +600,7 @@ func receive_hit(amount: float, zone_name: String, hit_dir: Vector2,
 		_spawn_damage_indicator(amount, zone_name, tags)
 
 	took_damage.emit(amount, zone_name, current_health, max_health)
+	_emit_health()
 
 	if current_health <= 0.0:
 		_die()
@@ -574,12 +703,29 @@ func _spawn_popup(text: String, color: Color, font_size: int,
 
 func _die() -> void:
 	is_alive = false
+	_eating_food = null
 	if weapon:
 		weapon.interrupt()
 	rotation = deg_to_rad(85.0 * facing_direction)
 	if visual_root:
 		visual_root.modulate = Color(0.6, 0.6, 0.6, 0.8)
+	if not is_player:
+		_drop_loot()
 	defeated.emit()
+
+## The fallen fighter's weapon and pockets spill onto the floor.
+func _drop_loot() -> void:
+	var drops: Array[ItemData] = []
+	if armed and weapon_data:
+		drops.append(weapon_data)
+		_set_weapon_active(false)   # it is on the floor now, not in the hand
+	drops.append_array(loot)
+	for i in drops.size():
+		var pickup := ItemPickup.new()
+		pickup.item = drops[i]
+		pickup.position = global_position + Vector2(-30.0 + 34.0 * i, 40.0)
+		pickup.pop_in = true
+		get_parent().add_child.call_deferred(pickup)
 
 func _find_opponent() -> CharacterBody2D:
 	for node in get_tree().get_nodes_in_group(&"combatants"):

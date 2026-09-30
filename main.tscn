@@ -4,6 +4,12 @@
 [ext_resource type="Script" uid="uid://cjkgxbfrv45hb" path="res://scripts/camera_follow.gd" id="2_camera"]
 [ext_resource type="PackedScene" path="res://scenes/combatant.tscn" id="3_combatant"]
 [ext_resource type="Script" uid="uid://iix87rrevfod" path="res://scripts/combat_hud.gd" id="4_hud"]
+[ext_resource type="Script" uid="uid://dmj6a63wks1qh" path="res://scripts/items/item_pickup.gd" id="5_pickup"]
+[ext_resource type="Resource" path="res://data/items/bone_club.tres" id="6_club"]
+[ext_resource type="Resource" path="res://data/items/dried_meat.tres" id="7_meat"]
+[ext_resource type="Resource" path="res://data/items/rusty_spear.tres" id="8_spear"]
+[ext_resource type="Resource" path="res://data/items/stale_bread.tres" id="9_bread"]
+[ext_resource type="Script" uid="uid://bb3u6qirgetos" path="res://scripts/items/item_data.gd" id="10_item_data"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
 size = Vector2(1400, 60)
@@ -71,6 +77,18 @@ is_player = false
 character_name = "Catacomb Husk"
 is_zombie = true
 armor_tier = 0
+weapon_data = ExtResource("6_club")
+loot = Array[ExtResource("10_item_data")]([ExtResource("7_meat")])
+
+[node name="SpearOnFloor" type="Node2D" parent="." unique_id=72129069]
+position = Vector2(250, 568)
+script = ExtResource("5_pickup")
+item = ExtResource("8_spear")
+
+[node name="BreadOnFloor" type="Node2D" parent="." unique_id=2139527563]
+position = Vector2(560, 568)
+script = ExtResource("5_pickup")
+item = ExtResource("9_bread")
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=1548057721]
 script = ExtResource("4_hud")
@@ -155,5 +173,5 @@ theme_override_constants/margin_bottom = 14
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.75, 0.7, 0.75)
 theme_override_font_sizes/font_size = 14
-text = "[A / D] Hop  |  [Hold LMB] Slash (full charge breaks guard)  |  [RMB] Thrust  |  [S / Shift] Guard, raise on impact = Parry  |  [R] Restart"
+text = "[A/D] Hop | [LMB] Slash | [RMB] Thrust | [S/Shift] Guard / Parry | [E] Pick up | [Q] Eat | [1-3] Weapon | [Tab] Inventory | [R] Restart"
 horizontal_alignment = 1

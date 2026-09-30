@@ -43,6 +43,11 @@ signal recovery_ended()
 @export_group("Misc")
 @export var counter_hit_mult: float = 1.5    # Hitting a charging or staggered opponent
 @export var clash_knockback: float = 320.0   # How hard blades bounce apart on clash
+@export var stagger_on_hit: float = 0.0      # Blunt weapons stagger on every clean hit
+@export var knockback_mult: float = 1.0
+
+## Stats this weapon was built from (null = the inspector values above)
+var data: WeaponData = null
 
 # ── State ────────────────────────────────────────────────────────────────────
 enum SwingState { IDLE, CHARGING, STRIKING, RECOVERY, GUARD }
@@ -74,6 +79,8 @@ const THRUST_MAX_ANGLE: float = 0.9    # Thrusts aim freely inside ±52°
 
 # Visual
 @onready var tip_marker: Marker2D = $TipMarker
+@onready var blade_collision: CollisionShape2D = $BladeCollision
+@onready var renderer: WeaponRenderer = get_node_or_null("WeaponRenderer")
 @onready var trail_line: Line2D = get_node_or_null("TrailLine")
 
 var owner_combatant: Node2D = null
@@ -83,6 +90,49 @@ var _facing: int = 1   # synced from combatant each frame
 func _ready() -> void:
 	if tip_marker:
 		_prev_tip_pos = tip_marker.global_position
+
+## Rebuild this weapon from data: stats, weight-driven timings, hit area, look.
+func apply_data(d: WeaponData) -> void:
+	data = d
+	weapon_name = d.display_name
+	base_damage = d.base_damage
+	max_charge_time = d.max_charge_time()
+	full_charge_damage_mult = d.full_charge_damage_mult
+	heavy_threshold = d.heavy_threshold
+	strike_duration = d.strike_duration()
+	whiff_recovery = d.whiff_recovery()
+	hit_recovery = d.hit_recovery()
+	thrust_windup_time = d.thrust_windup_time()
+	thrust_whiff_recovery = d.thrust_whiff_recovery()
+	thrust_hit_recovery = 0.15 * d.weight
+	thrust_reach = d.thrust_reach
+	thrust_damage_mult = d.thrust_damage_mult
+	block_damage_mult = d.block_chip_mult
+	stagger_on_hit = d.stagger_on_hit
+	knockback_mult = d.knockback_mult
+
+	# Hit area follows the reach. A fresh shape: the scene's one is shared by
+	# every combatant instance.
+	var shape := RectangleShape2D.new()
+	shape.size = Vector2(d.reach - 4.0, 16.0)
+	blade_collision.shape = shape
+	blade_collision.position = Vector2(18.0 + d.reach * 0.5, 0.0)
+	tip_marker.position = Vector2(18.0 + d.reach - 3.0, 0.0)
+	if renderer:
+		renderer.weapon_type = d.style
+		renderer.blade_length = d.reach
+	interrupt()
+	_prev_tip_pos = tip_marker.global_position
+
+func get_reach() -> float:
+	return data.reach if data else 60.0
+
+## Distance (body to body) from which a slash connects — used by the AI
+func slash_range() -> float:
+	return 18.0 + get_reach() + 47.0
+
+func thrust_range() -> float:
+	return slash_range() + thrust_reach - 6.0
 
 func _physics_process(delta: float) -> void:
 	_update_tip_speed(delta)
@@ -105,7 +155,7 @@ func _physics_process(delta: float) -> void:
 	_update_trail()
 
 # ── Called by Combatant every physics frame (player only) ────────────────────
-func weapon_physics_update(delta: float, facing: int, _shoulder: Node2D,
+func weapon_physics_update(delta: float, facing: int, _shoulder_node: Node2D,
 		mouse_world_pos: Vector2, hold_down: bool,
 		thrust_pressed: bool = false, guard_held: bool = false) -> void:
 	_facing = facing
@@ -146,7 +196,7 @@ func ai_start_charge() -> void:
 		_charge_ratio = 0.0
 		state = SwingState.CHARGING
 
-func ai_release(_shoulder: Node2D, target_angle: float) -> void:
+func ai_release(_shoulder_node: Node2D, target_angle: float) -> void:
 	if state != SwingState.CHARGING or strike_kind != StrikeKind.SLASH:
 		return
 	_release_slash(target_angle)
@@ -155,7 +205,7 @@ func ai_start_thrust(target_world_pos: Vector2) -> void:
 	if state == SwingState.IDLE:
 		_begin_thrust(target_world_pos)
 
-func ai_cancel(_shoulder: Node2D = null) -> void:
+func ai_cancel(_shoulder_node: Node2D = null) -> void:
 	interrupt()
 
 func ai_guard(up: bool) -> void:
@@ -435,7 +485,11 @@ func _try_hit(hurtbox: Area2D) -> void:
 	_hit_this_strike = true
 	hit_connected.emit(victim, zone_name, damage, hit_pos, hit_normal)
 	if victim.has_method("receive_hit"):
-		victim.receive_hit(damage, zone_name, hit_normal, current_tip_speed, owner_combatant, tags)
+		victim.receive_hit(damage, zone_name, hit_normal, current_tip_speed * knockback_mult,
+			owner_combatant, tags)
+	# Blunt weapons daze on every clean hit
+	if stagger_on_hit > 0.0 and victim.has_method("stagger") and victim.get("is_alive") == true:
+		victim.stagger(stagger_on_hit)
 
 func _handle_clash(other_weapon: Weapon) -> void:
 	var pos: Vector2 = tip_marker.global_position if tip_marker else global_position

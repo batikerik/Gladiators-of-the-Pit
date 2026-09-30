@@ -11,7 +11,7 @@ var _step: Step = Step.FALLING
 
 @onready var player: Combatant = $Player
 @onready var zombie: Combatant = $Zombie
-@onready var pickup: WeaponPickup = $WeaponPickup
+@onready var pickup: ItemPickup = $WeaponPickup
 @onready var hud: CanvasLayer = $HUD
 @onready var hint_label: Label = $HUD/MarginContainerBottom/RestartHint
 @onready var message_label: Label = $HUD/CenterContainer/MessageLabel
@@ -31,6 +31,11 @@ var _zones_hit: Dictionary = {"HEAD": false, "TORSO": false, "LEGS": false}
 var _panel: PanelContainer = null
 var _fade: ColorRect = null
 var _message_serial: int = 0
+
+func _enter_tree() -> void:
+	# The descent starts here (also on [R] restart): empty pockets, full health.
+	# Runs before the player's _ready reads RunState.
+	RunState.new_run()
 
 func _ready() -> void:
 	player.input_enabled = false
@@ -62,8 +67,8 @@ func _on_landed() -> void:
 	_show_panel()
 	hint_label.text = "[A / D] Прыжок   |   [E] Подобрать"
 
-func _on_weapon_picked() -> void:
-	player.equip_weapon()
+func _on_weapon_picked(_item: ItemData) -> void:
+	# The pickup put the gladius into RunState.inventory, which armed the player
 	_complete("weapon")
 	player.say("Гладиус. Сойдёт.")
 	_step = Step.ZONES

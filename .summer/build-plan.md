@@ -18,9 +18,9 @@ Source: .summer/GameSoul.md (2026-09-29)
 - [x] Objective UI overlay displaying tutorial checklist
 
 ## Milestone 3: Inventory, Food & Weapon Variety
-- [ ] Inventory data system (weapons, food items)
-- [ ] Weapon stats & behaviors (different weight, reach, damage multiplier)
-- [ ] Food system (consumable resources required to rest safely)
+- [x] Inventory data system (weapons, food items)
+- [x] Weapon stats & behaviors (different weight, reach, damage multiplier)
+- [x] Food system (consumable resources required to rest safely) — `RunState.rest()` ready; the rest UI comes with the Safe Room (Milestone 4)
 
 ## Milestone 4: Node Map & Safe Room (Inscryption Style)
 - [ ] Node-based room progression map (Combat, Loot/Cache, Safe Room, Boss)

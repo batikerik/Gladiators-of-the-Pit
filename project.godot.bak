@@ -14,6 +14,11 @@ config/name="gladiators"
 run/main_scene="res://scenes/intro_cutscene.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
+[autoload]
+
+RunState="*res://scripts/run_state.gd"
+InventoryScreen="*res://scripts/ui/inventory_screen.gd"
+
 [display]
 
 window/size/viewport_width=1280

@@ -26,7 +26,7 @@ func _find_and_bind_combatants() -> void:
 		if c is CharacterBody2D:
 			if c.is_player:
 				player_combatant = c
-				c.took_damage.connect(_on_player_took_damage)
+				c.health_changed.connect(_on_player_health_changed)
 				c.defeated.connect(_on_player_defeated)
 				if player_name_label:
 					player_name_label.text = c.character_name
@@ -35,7 +35,7 @@ func _find_and_bind_combatants() -> void:
 					player_bar.value = c.current_health
 			else:
 				enemy_combatant = c
-				c.took_damage.connect(_on_enemy_took_damage)
+				c.health_changed.connect(_on_enemy_health_changed)
 				c.defeated.connect(_on_enemy_defeated)
 				if enemy_name_label:
 					enemy_name_label.text = c.character_name
@@ -43,12 +43,12 @@ func _find_and_bind_combatants() -> void:
 					enemy_bar.max_value = c.max_health
 					enemy_bar.value = c.current_health
 
-func _on_player_took_damage(_amount: float, _zone: String, current_hp: float, _max_hp: float) -> void:
+func _on_player_health_changed(current_hp: float, _max_hp: float) -> void:
 	if player_bar:
 		var tween := create_tween()
 		tween.tween_property(player_bar, "value", current_hp, 0.15)
 
-func _on_enemy_took_damage(_amount: float, _zone: String, current_hp: float, _max_hp: float) -> void:
+func _on_enemy_health_changed(current_hp: float, _max_hp: float) -> void:
 	if enemy_bar:
 		var tween := create_tween()
 		tween.tween_property(enemy_bar, "value", current_hp, 0.15)
